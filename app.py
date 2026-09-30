@@ -1968,16 +1968,16 @@ else:
         # ========================================================
         sim = simulate_team_earnings(data["sales"], months=12)
 
-        st.markdown('<div class="section-title">📈 Seu potencial de ganho no time</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📈 Seu potencial de ganho no meu time</div>', unsafe_allow_html=True)
 
         e1, e2 = st.columns(2)
         with e1:
             st.markdown(
                 f"""
                 <div class="earn-card">
-                    <div class="earn-label">Ganho médio mensal<br>nos primeiros 3 meses</div>
+                    <div class="earn-label">Ganho médio mensal<br>inicial</div>
                     <div class="earn-value">{brl(sim["avg_3_months"])}</div>
-                    <div class="earn-sub">média mensal com {data["sales"]} vendas/mês</div>
+                    <div class="earn-sub">média mensal 
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1986,9 +1986,9 @@ else:
             st.markdown(
                 f"""
                 <div class="earn-card">
-                    <div class="earn-label">Ganho no 12º mês<br>após 1 ano de operação</div>
+                    <div class="earn-label">Ganho médio mensal<br>após 1 ano de operação</div>
                     <div class="earn-value">{brl(sim["month_12"])}</div>
-                    <div class="earn-sub">com carteira de {sim["clients_at_12"]} clientes</div>
+                    <div class="earn-sub">Considerando seus clientes ativos</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
