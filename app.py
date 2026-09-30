@@ -755,7 +755,10 @@ def calculate(data):
 
     return {
         "rates": rates,
-        "bottleneck": min(rates, key=rates.get),
+        "bottleneck": min(
+    ("Contato → conversa", "Conversa → cotação", "Cotação → venda"),
+    key=lambda s: rates[s],
+        ),
         "low_volume": low_volume,
         "current_revenue": current_revenue,
         "target_revenue": target_revenue,
@@ -826,7 +829,7 @@ def insights_for(stage, result, data):
             ],
         },
     }
-    return insights[stage]
+    return insights.get(stage, insights["Cotação → venda"])
 
 
 def render_logo():
