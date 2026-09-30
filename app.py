@@ -500,8 +500,8 @@ def admin_rows():
     try:
         response = sb.table("raio_x_leads").select("*").order("created_at", desc=True).execute()
         return response.data or [], None
-    except Exception:
-        return None, "Não foi possível carregar os leads agora."
+    except Exception as exc:
+        return None, f"Não foi possível carregar os leads agora: {exc}"
 
 
 def render_admin():
