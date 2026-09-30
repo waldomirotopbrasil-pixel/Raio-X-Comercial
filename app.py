@@ -34,11 +34,81 @@ TEXT = "#F5F5F5"
 st.markdown(
     f"""
     <style>
-        #MainMenu, footer, header {{visibility:hidden;}}
+        /* ============================================================
+           SISTEMA DE CORES
+           ============================================================ */
+
+        :root {{
+            /* Tema escuro — padrão */
+            --bg: #080808;
+            --surface: #111111;
+            --surface-2: #171717;
+            --surface-3: #1D1D1D;
+            --border: #292929;
+
+            --text: #F5F5F5;
+            --text-secondary: #BDBDBD;
+            --text-muted: #969696;
+            --text-faint: #6F6F6F;
+
+            --progress-bg: #242424;
+
+            --orange: #FF6600;
+            --orange-light: #FF9A5A;
+
+            --danger-bg: rgba(255,102,0,.08);
+            --danger-border: rgba(255,102,0,.38);
+
+            --shadow: rgba(0,0,0,.22);
+            --shadow-strong: rgba(0,0,0,.35);
+        }}
+
+
+        /* ============================================================
+           TEMA CLARO
+           O navegador/dispositivo informa automaticamente o tema.
+           ============================================================ */
+
+        @media (prefers-color-scheme: light) {{
+            :root {{
+                --bg: #F5F5F5;
+                --surface: #FFFFFF;
+                --surface-2: #FFFFFF;
+                --surface-3: #F0F0F0;
+                --border: #D9D9D9;
+
+                --text: #171717;
+                --text-secondary: #555555;
+                --text-muted: #707070;
+                --text-faint: #888888;
+
+                --progress-bg: #DCDCDC;
+
+                --orange: #F05A00;
+                --orange-light: #C94C00;
+
+                --danger-bg: rgba(240,90,0,.07);
+                --danger-border: rgba(240,90,0,.32);
+
+                --shadow: rgba(0,0,0,.08);
+                --shadow-strong: rgba(0,0,0,.14);
+            }}
+        }}
+
+
+        /* ============================================================
+           STREAMLIT — BASE
+           ============================================================ */
+
+        #MainMenu,
+        footer,
+        header {{
+            visibility: hidden;
+        }}
 
         .stApp {{
-            background: #080808;
-            color: {TEXT};
+            background: var(--bg) !important;
+            color: var(--text) !important;
         }}
 
         .block-container {{
@@ -47,15 +117,101 @@ st.markdown(
             padding-bottom: 4rem;
         }}
 
+        html,
+        body,
+        [class*="st-"],
+        .stApp {{
+            font-family: "Montserrat", Arial, sans-serif !important;
+        }}
+
+
+        /* ============================================================
+           LABELS DOS INPUTS
+           ============================================================ */
+
         div[data-testid="stNumberInput"] label,
         div[data-testid="stTextInput"] label,
         div[data-testid="stSelectbox"] label {{
-            color: #D8D8D8 !important;
+            color: var(--text-secondary) !important;
             font-weight: 650 !important;
         }}
 
+
+        /* ============================================================
+           INPUTS / SELECTS
+           ============================================================ */
+
+        input,
+        textarea,
+        select,
+        button,
+        [data-testid="stNumberInput"] input {{
+            font-family: "Montserrat", Arial, sans-serif !important;
+            font-weight: 600 !important;
+        }}
+
+        div[data-baseweb="input"],
+        div[data-baseweb="select"],
+        div[data-baseweb="textarea"] {{
+            background: var(--surface) !important;
+            border-color: var(--border) !important;
+        }}
+
+        div[data-baseweb="input"] input,
+        div[data-baseweb="select"] input,
+        div[data-baseweb="textarea"] textarea {{
+            color: var(--text) !important;
+            background: var(--surface) !important;
+            caret-color: var(--orange) !important;
+        }}
+
+        div[data-baseweb="input"] input::placeholder,
+        div[data-baseweb="textarea"] textarea::placeholder {{
+            color: var(--text-muted) !important;
+            opacity: 1 !important;
+        }}
+
+        div[data-baseweb="select"] > div {{
+            background: var(--surface) !important;
+            border-color: var(--border) !important;
+        }}
+
+        div[data-baseweb="select"] span {{
+            color: var(--text) !important;
+        }}
+
+        /* Dropdown aberto */
+        [data-baseweb="popover"] {{
+            background: var(--surface) !important;
+            border: 1px solid var(--border) !important;
+        }}
+
+        [role="option"] {{
+            background: var(--surface) !important;
+            color: var(--text) !important;
+        }}
+
+        [role="option"]:hover {{
+            background: var(--surface-3) !important;
+        }}
+
+        [data-testid="stMetricValue"] {{
+            font-family: "Montserrat", Arial, sans-serif !important;
+            font-weight: 700 !important;
+            color: var(--text) !important;
+        }}
+
+        [data-testid="stMetricLabel"] {{
+            color: var(--text-muted) !important;
+        }}
+
+
+        /* ============================================================
+           MARCA / HERO
+           ============================================================ */
+
         .brand {{
-            text-align:center;
+            text-align: center;
             margin-bottom: 1.35rem;
         }}
 
@@ -67,7 +223,7 @@ st.markdown(
         }}
 
         .eyebrow {{
-            color: {ORANGE};
+            color: var(--orange);
             font-size: .76rem;
             font-weight: 850;
             letter-spacing: .16em;
@@ -80,28 +236,38 @@ st.markdown(
             line-height: 1.03;
             font-weight: 900;
             margin: .35rem 0 .6rem;
-            color: white;
+            color: var(--text);
         }}
 
         .hero-sub {{
-            color: #BDBDBD;
+            color: var(--text-secondary);
             font-size: 1.03rem;
             line-height: 1.55;
             max-width: 620px;
             margin: 0 auto;
         }}
 
+
+        /* ============================================================
+           CARD DE PERGUNTA
+           ============================================================ */
+
         .question-card {{
-            background: linear-gradient(145deg, #171717, #101010);
-            border: 1px solid #292929;
+            background: linear-gradient(
+                145deg,
+                var(--surface-2),
+                var(--surface)
+            );
+
+            border: 1px solid var(--border);
             border-radius: 24px;
             padding: 1.35rem 1.25rem;
             margin-top: 1.15rem;
-            box-shadow: 0 15px 45px rgba(0,0,0,.22);
+            box-shadow: 0 15px 45px var(--shadow);
         }}
 
         .step {{
-            color: {ORANGE};
+            color: var(--orange);
             font-size: .77rem;
             font-weight: 850;
             letter-spacing: .08em;
@@ -112,199 +278,428 @@ st.markdown(
             font-size: 1.5rem;
             line-height: 1.2;
             font-weight: 850;
-            color: white;
+            color: var(--text);
             margin: .35rem 0 .4rem;
         }}
 
         .helper {{
-            color: #969696;
+            color: var(--text-muted);
             font-size: .92rem;
             line-height: 1.45;
             margin-bottom: .8rem;
         }}
 
         .progress-wrap {{
-            background: #242424;
+            background: var(--progress-bg);
             height: 6px;
             border-radius: 99px;
-            overflow:hidden;
+            overflow: hidden;
             margin: .8rem 0 1.1rem;
         }}
 
         .progress-bar {{
-            height:100%;
-            background: {ORANGE};
-            border-radius:99px;
+            height: 100%;
+            background: var(--orange);
+            border-radius: 99px;
         }}
 
         .mini-note {{
-            color:#8E8E8E;
-            font-size:.82rem;
-            text-align:center;
-            margin-top:.55rem;
+            color: var(--text-faint);
+            font-size: .82rem;
+            text-align: center;
+            margin-top: .55rem;
         }}
 
+
+        /* ============================================================
+           CARDS DE RESULTADO
+           ============================================================ */
+
         .result-card {{
-            background: linear-gradient(145deg, #171717, #0E0E0E);
-            border: 1px solid #2A2A2A;
+            background: linear-gradient(
+                145deg,
+                var(--surface-2),
+                var(--surface)
+            );
+
+            border: 1px solid var(--border);
             border-radius: 22px;
             padding: 1.25rem;
             margin: .9rem 0;
         }}
 
         .result-label {{
-            color:#8F8F8F;
-            font-size:.78rem;
-            text-transform:uppercase;
-            letter-spacing:.08em;
-            font-weight:800;
+            color: var(--text-muted);
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-weight: 800;
         }}
 
         .result-value {{
-            color:white;
-            font-size:2rem;
-            font-weight:900;
-            margin-top:.15rem;
+            color: var(--text);
+            font-size: 2rem;
+            font-weight: 900;
+            margin-top: .15rem;
         }}
 
         .orange {{
-            color:{ORANGE};
+            color: var(--orange);
         }}
 
+
+        /* ============================================================
+           ALERTA / GARGALO
+           ============================================================ */
+
         .danger-card {{
-            background: rgba(255,102,0,.08);
-            border: 1px solid rgba(255,102,0,.38);
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
             border-radius: 20px;
             padding: 1.15rem;
             margin: 1rem 0;
         }}
 
+
+        /* ============================================================
+           DICAS
+           ============================================================ */
+
         .tip-card {{
-            background:#111;
-            border:1px solid #282828;
-            border-radius:18px;
-            padding:1rem 1.05rem;
-            margin:.65rem 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1rem 1.05rem;
+            margin: .65rem 0;
         }}
 
         .tip-title {{
-            color:white;
-            font-weight:800;
-            margin-bottom:.25rem;
+            color: var(--text);
+            font-weight: 800;
+            margin-bottom: .25rem;
         }}
 
         .tip-text {{
-            color:#B8B8B8;
-            line-height:1.48;
-            font-size:.92rem;
+            color: var(--text-secondary);
+            line-height: 1.48;
+            font-size: .92rem;
         }}
 
+
+        /* ============================================================
+           POTENCIAL
+           ============================================================ */
+
         .potential {{
-            border:1px solid rgba(255,102,0,.45);
-            background:linear-gradient(145deg, rgba(255,102,0,.13), rgba(255,102,0,.04));
-            border-radius:22px;
-            padding:1.25rem;
-            text-align:center;
-            margin:1rem 0;
+            border: 1px solid rgba(255,102,0,.45);
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,102,0,.13),
+                    rgba(255,102,0,.04)
+                );
+
+            border-radius: 22px;
+            padding: 1.25rem;
+            text-align: center;
+            margin: 1rem 0;
         }}
 
         .potential-number {{
-            color:{ORANGE};
-            font-size:2.35rem;
-            line-height:1;
-            font-weight:950;
-            margin:.35rem 0;
+            color: var(--orange);
+            font-size: 2.35rem;
+            line-height: 1;
+            font-weight: 950;
+            margin: .35rem 0;
         }}
+
+
+        /* ============================================================
+           CELEBRAÇÃO
+           ============================================================ */
 
         .celebration {{
             border: 1px solid rgba(255,102,0,.55);
+
             background:
-                radial-gradient(circle at 50% 0%, rgba(255,102,0,.20), transparent 48%),
-                linear-gradient(145deg, #191919, #0C0C0C);
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(255,102,0,.20),
+                    transparent 48%
+                ),
+                linear-gradient(
+                    145deg,
+                    var(--surface-2),
+                    var(--surface)
+                );
+
             border-radius: 26px;
             padding: 1.7rem 1.25rem;
-            text-align:center;
+            text-align: center;
             margin: 1rem 0 1.25rem;
             box-shadow: 0 0 45px rgba(255,102,0,.10);
         }}
 
         .celebration-icon {{
             font-size: 3.3rem;
-            line-height:1;
-            margin-bottom:.45rem;
+            line-height: 1;
+            margin-bottom: .45rem;
         }}
 
         .celebration-title {{
-            color:white;
-            font-size:2rem;
-            font-weight:950;
-            line-height:1.05;
+            color: var(--text);
+            font-size: 2rem;
+            font-weight: 950;
+            line-height: 1.05;
         }}
 
         .celebration-sub {{
-            color:#BDBDBD;
-            font-size:.98rem;
-            line-height:1.5;
-            margin-top:.6rem;
+            color: var(--text-secondary);
+            font-size: .98rem;
+            line-height: 1.5;
+            margin-top: .6rem;
         }}
 
+
+        /* ============================================================
+           BADGE DE FONTE
+           ============================================================ */
+
         .source-badge {{
-            display:inline-block;
-            border:1px solid rgba(255,102,0,.35);
-            background:rgba(255,102,0,.08);
-            color:#FF9A5A;
-            border-radius:999px;
-            padding:.35rem .7rem;
-            font-size:.78rem;
-            font-weight:800;
-            margin-top:.45rem;
+            display: inline-block;
+            border: 1px solid rgba(255,102,0,.35);
+            background: rgba(255,102,0,.08);
+            color: var(--orange-light);
+            border-radius: 999px;
+            padding: .35rem .7rem;
+            font-size: .78rem;
+            font-weight: 800;
+            margin-top: .45rem;
         }}
+
+
+        /* ============================================================
+           BOTÕES
+           ============================================================ */
 
         div.stButton > button {{
             border-radius: 14px !important;
             min-height: 48px !important;
             font-weight: 850 !important;
-            border: 1px solid #333 !important;
+
+            border: 1px solid var(--border) !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+
+            transition:
+                transform .15s ease,
+                border-color .15s ease,
+                background .15s ease;
+        }}
+
+        div.stButton > button:hover {{
+            border-color: var(--orange) !important;
+            color: var(--text) !important;
         }}
 
         div.stButton > button[kind="primary"] {{
-            background:{ORANGE} !important;
-            border-color:{ORANGE} !important;
-            color:#fff !important;
+            background: var(--orange) !important;
+            border-color: var(--orange) !important;
+            color: #FFFFFF !important;
         }}
 
+        div.stButton > button[kind="primary"]:hover {{
+            background: var(--orange) !important;
+            border-color: var(--orange) !important;
+            color: #FFFFFF !important;
+            filter: brightness(1.05);
+        }}
+
+
+        /* ============================================================
+           SEÇÕES
+           ============================================================ */
+
         .section-title {{
-            font-size:1.15rem;
-            font-weight:850;
-            margin:1.3rem 0 .7rem;
+            font-size: 1.15rem;
+            font-weight: 850;
+            margin: 1.3rem 0 .7rem;
+            color: var(--text);
         }}
 
         .privacy {{
-            text-align:center;
-            color:#6F6F6F;
-            font-size:.76rem;
-            margin-top:.7rem;
+            text-align: center;
+            color: var(--text-faint);
+            font-size: .76rem;
+            margin-top: .7rem;
         }}
 
-        @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap");
-        html, body, [class*="st-"], .stApp {{ font-family:"Montserrat",Arial,sans-serif !important; }}
-        input, textarea, select, button, [data-testid="stNumberInput"] input {{
-            font-family:"Montserrat",Arial,sans-serif !important; font-weight:600 !important;
-        }}
-        [data-testid="stMetricValue"] {{ font-family:"Montserrat",Arial,sans-serif !important; font-weight:700 !important; }}
+
+        /* ============================================================
+           PERFIL COMERCIAL
+           ============================================================ */
 
         .profile-card {{
-            background:radial-gradient(circle at 50% 0%,rgba(255,102,0,.22),transparent 54%),linear-gradient(145deg,#191919,#0b0b0b);
-            border:1px solid rgba(255,102,0,.52); border-radius:26px; padding:1.5rem 1.25rem;
-            text-align:center; margin:0 0 1.2rem; box-shadow:0 0 42px rgba(255,102,0,.09);
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(255,102,0,.16),
+                    transparent 54%
+                ),
+                linear-gradient(
+                    145deg,
+                    var(--surface-2),
+                    var(--surface)
+                );
+
+            border: 1px solid rgba(255,102,0,.52);
+            border-radius: 26px;
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+            margin: 0 0 1.2rem;
+            box-shadow: 0 0 42px rgba(255,102,0,.09);
         }}
-        .profile-kicker {{ color:#FF9A5A; font-size:.74rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }}
-        .profile-name {{ color:#fff; font-size:clamp(1.55rem,5vw,2.2rem); line-height:1.08; font-weight:900; margin:.35rem 0 .45rem; }}
-        .profile-desc {{ color:#BDBDBD; font-size:.9rem; line-height:1.5; max-width:580px; margin:0 auto; }}
-        .admin-float {{ position:fixed; left:18px; bottom:16px; z-index:9999; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #2b2b2b; background:rgba(12,12,12,.86); border-radius:50%; box-shadow:0 5px 20px rgba(0,0,0,.35); backdrop-filter:blur(8px); }}
-        .admin-float a {{ color:#777; text-decoration:none; font-size:13px; }}
-        .admin-float a:hover {{ color:#FF6600; }}
-        .admin-shell {{ max-width:1200px; margin:0 auto; }}
+
+        .profile-kicker {{
+            color: var(--orange-light);
+            font-size: .74rem;
+            font-weight: 900;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }}
+
+        .profile-name {{
+            color: var(--text);
+            font-size: clamp(1.55rem, 5vw, 2.2rem);
+            line-height: 1.08;
+            font-weight: 900;
+            margin: .35rem 0 .45rem;
+        }}
+
+        .profile-desc {{
+            color: var(--text-secondary);
+            font-size: .9rem;
+            line-height: 1.5;
+            max-width: 580px;
+            margin: 0 auto;
+        }}
+
+
+        /* ============================================================
+           BOTÃO ADMINISTRATIVO FLUTUANTE
+           ============================================================ */
+
+        .admin-float {{
+            position: fixed;
+            left: 18px;
+            bottom: 16px;
+            z-index: 9999;
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: 50%;
+
+            box-shadow: 0 5px 20px var(--shadow-strong);
+            backdrop-filter: blur(8px);
+        }}
+
+        .admin-float a {{
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+        }}
+
+        .admin-float a:hover {{
+            color: var(--orange);
+        }}
+
+        .admin-shell {{
+            max-width: 1200px;
+            margin: 0 auto;
+        }}
+
+
+        /* ============================================================
+           AJUSTES ESPECÍFICOS DO TEMA CLARO
+           ============================================================ */
+
+        @media (prefers-color-scheme: light) {{
+
+            .stApp {{
+                background: var(--bg) !important;
+            }}
+
+            /* Evita texto branco herdado do tema escuro */
+            .stMarkdown,
+            .stCaption,
+            .stText {{
+                color: var(--text);
+            }}
+
+            /* Texto auxiliar do Streamlit */
+            [data-testid="stCaptionContainer"] {{
+                color: var(--text-muted) !important;
+            }}
+
+            /* Divisores */
+            hr {{
+                border-color: var(--border) !important;
+            }}
+
+            /* Métricas */
+            [data-testid="stMetric"] {{
+                color: var(--text) !important;
+            }}
+
+            [data-testid="stMetricValue"] {{
+                color: var(--text) !important;
+            }}
+
+            [data-testid="stMetricLabel"] {{
+                color: var(--text-muted) !important;
+            }}
+
+            /* Inputs */
+            input,
+            textarea {{
+                color: var(--text) !important;
+                -webkit-text-fill-color: var(--text) !important;
+            }}
+
+            /* Selectbox */
+            [data-baseweb="select"] {{
+                color: var(--text) !important;
+            }}
+
+            /* Popovers e menus */
+            [data-baseweb="popover"] {{
+                background: var(--surface) !important;
+            }}
+
+            /* Tabela administrativa */
+            [data-testid="stDataFrame"] {{
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+            }}
+        }}
+
+
+        /* ============================================================
+           FONTE
+           ============================================================ */
+
+        @import url(
+            "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap"
+        );
+
     </style>
     """,
     unsafe_allow_html=True,
