@@ -53,3 +53,25 @@ Configure:
 - `SUPABASE_KEY`
 
 Execute o `supabase.sql` no projeto antes do primeiro teste com os novos campos.
+
+
+## Secrets do Streamlit
+
+O app lê o Supabase pelo mesmo mecanismo de Secrets usado pelo SMTP. No `secrets.toml`, mantenha as chaves no nível principal:
+
+```toml
+SUPABASE_URL = "https://SEU-PROJETO.supabase.co"
+SUPABASE_KEY = "SUA_CHAVE"
+OTP_SECRET = "SUA_FRASE_GRANDE"
+ADMIN_EMAILS = ["seu-email-autorizado@gmail.com"]
+
+[smtp]
+host = "smtp.gmail.com"
+port = 465
+username = "seu-gmail@gmail.com"
+password = "SUA_APP_PASSWORD"
+from_email = "seu-gmail@gmail.com"
+from_name = "Raio-X do Consultor"
+```
+
+A V7 também aceita `SUPABASE_ANON_KEY` ou `SUPABASE_SERVICE_ROLE_KEY` como alternativa ao `SUPABASE_KEY`.

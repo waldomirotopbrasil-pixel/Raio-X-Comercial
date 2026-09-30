@@ -585,11 +585,25 @@ def render_admin():
 
 
 def get_supabase():
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    # Em produção, leia primeiro os Streamlit Secrets. O V6 lia apenas
+    # variáveis de ambiente aqui, então o app podia ter SUPABASE configurado
+    # no Secrets e ainda assim mostrar "Supabase não configurado".
+    url = get_secret("SUPABASE_URL", "")
+    key = get_secret("SUPABASE_KEY", "")
+
+    # Aceita também o nome alternativo usado em alguns projetos.
+    if not key:
+        key = get_secret("SUPABASE_ANON_KEY", "")
+    if not key:
+        key = get_secret("SUPABASE_SERVICE_ROLE_KEY", "")
+
     if not url or not key or create_client is None:
         return None
-    return create_client(url, key)
+
+    try:
+        return create_client(str(url).strip(), str(key).strip())
+    except Exception:
+        return None
 
 
 def save_lead(data):
