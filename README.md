@@ -14,6 +14,10 @@
   - Ações de Rua: +15%
   - Outros: sem ajuste
 - Cálculo do volume de contatos necessário para a meta quando o gargalo é volume.
+- Conversão cotação → venda e contato → venda.
+- Contatos necessários, em média, para gerar uma venda.
+- Pergunta condicional sobre descontos quando o ganho médio por venda fica abaixo de R$ 250.
+- Alertas e ações para remuneração baixa e desconto acima de 30%.
 - Insights e ações práticas por diagnóstico.
 - Supabase opcional no desenvolvimento local.
 

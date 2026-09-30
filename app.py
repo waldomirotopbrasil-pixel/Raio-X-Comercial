@@ -16,7 +16,7 @@ except Exception:
 # ============================================================
 # O logo transparente também funciona como favicon.
 st.set_page_config(
-    page_title="Raio-X Comercial",
+    page_title="Raio-X Comercial | David Fernandes",
     page_icon="logo.png",
     layout="centered",
     initial_sidebar_state="collapsed",
@@ -349,6 +349,38 @@ def source_message(source, factor):
     )
 
 
+def discount_label(value):
+    labels = {
+        0.0: "Quase nunca (0%)",
+        0.10: "Às vezes (até 10%)",
+        0.30: "Com frequência (até 30%)",
+        0.50: "Frequentemente (30% a 50%)",
+        0.70: "Muito frequentemente (50% a 70%)",
+        1.00: "Frequentemente preciso zerar a adesão",
+    }
+    return labels.get(float(value), "")
+
+
+def discount_insights(discount):
+    if discount > 0.30:
+        return {
+            "title": "Seu desconto pode estar comendo sua comissão.",
+            "text": (
+                "Quando o desconto vira uma ferramenta recorrente para fechar, "
+                "o consultor pode acabar reduzindo a própria margem antes de descobrir "
+                "qual é a objeção real do cliente. O objetivo não é nunca conceder desconto, "
+                "mas fazer o cliente perceber valor antes de mexer no preço."
+            ),
+            "actions": [
+                ("Use SPIN Selling", "Antes de negociar preço, aprofunde a situação, o problema, as consequências e o que o cliente precisa resolver. A conversa deixa de ser só 'quanto custa?'."),
+                ("Defenda o valor antes do preço", "Explique cobertura, assistência, experiência de atendimento e o que o cliente realmente recebe. Compare valor entregue, não apenas mensalidade."),
+                ("Troque texto por conversa", "Quando a negociação trava no WhatsApp, tente ligação ou atendimento presencial. Comunicação síncrona permite entender objeções e responder na hora."),
+                ("Tenha uma regra de desconto", "Defina previamente até onde você pode negociar e em quais situações. Isso evita conceder desconto por impulso só para não perder a venda."),
+            ],
+        }
+    return None
+
+
 def calculate(data):
     contacts = data["contacts"]
     conversations = data["conversations"]
@@ -357,15 +389,21 @@ def calculate(data):
     gain = data["gain"]
     target = data["target"]
     source = data.get("lead_source")
+    discount = float(data.get("discount", 0) or 0)
 
     r1 = conversations / contacts if contacts else 0
     r2 = quotes / conversations if conversations else 0
     r3 = sales / quotes if quotes else 0
 
+    contact_to_sale = sales / contacts if contacts else 0
+    contacts_per_sale = contacts / sales if sales else None
+    conversations_per_sale = conversations / sales if sales else None
+
     rates = {
         "Contato → conversa": r1,
         "Conversa → cotação": r2,
         "Cotação → venda": r3,
+        "Contato → venda": contact_to_sale,
     }
 
     low_volume = contacts < 60 or quotes < 50
@@ -456,6 +494,12 @@ def calculate(data):
         "required_quotes": required_quotes,
         "required_contacts": required_contacts,
         "additional_contacts": additional_contacts,
+        "contact_to_sale": contact_to_sale,
+        "contacts_per_sale": contacts_per_sale,
+        "conversations_per_sale": conversations_per_sale,
+        "discount": discount,
+        "discount_label": discount_label(discount),
+        "discount_insights": discount_insights(discount),
     }
 
 
@@ -513,16 +557,16 @@ def render_logo():
         st.image("logo.png", width=100)
         st.markdown(
             '<div class="eyebrow">RAIO-X COMERCIAL</div>'
-            '<div class="hero-title">Onde seu funil está vazando?</div>'
-            '<div class="hero-sub">Responda algumas perguntas e descubra qual etapa do seu processo comercial mais precisa de atenção — e o que pode acontecer se você melhorar.</div>',
+            '<div class="hero-title">Onde você está perdendo vendas?</div>'
+            '<div class="hero-sub">Responda algumas perguntas e descubra onde suas vendas estão escapando — e o que você pode fazer para vender mais.</div>',
             unsafe_allow_html=True,
         )
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.markdown(
             '<div class="brand"><div class="eyebrow">RAIO-X COMERCIAL</div>'
-            '<div class="hero-title">Onde seu funil está vazando?</div>'
-            '<div class="hero-sub">Responda algumas perguntas e descubra qual etapa do seu processo comercial mais precisa de atenção.</div></div>',
+            '<div class="hero-title">Onde você está perdendo vendas?</div>'
+            '<div class="hero-sub">Responda algumas perguntas e descubra onde suas vendas estão escapando — e o que você pode fazer para vender mais.</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -548,28 +592,32 @@ render_logo()
 # ============================================================
 def build_questions():
     questions = [
-        ("contacts", "Quantos novos contatos você recebe por mês?", "Pense em WhatsApp, Instagram, indicação, anúncio e prospecção.", 200, 10, 1, "number"),
-        ("conversations", "Desses contatos, com quantos você realmente conversa?", "Considere apenas quem respondeu ou teve uma conversa real com você.", 140, 10, 0, "number"),
-        ("quotes", "Para quantos você chega a apresentar uma cotação ou proposta?", "Aqui vale a proposta efetivamente apresentada ao cliente.", 100, 5, 0, "number"),
+        ("contacts", "Quantos novos contatos você recebe por mês?", "Pense em WhatsApp, Instagram, indicação, anúncio e prospecção.", 0, 10, 1, "number"),
+        ("conversations", "Desses contatos, com quantos você realmente conversa?", "Considere apenas quem respondeu ou teve uma conversa real com você.", 0, 10, 0, "number"),
+        ("quotes", "Para quantos você chega a apresentar uma cotação ou proposta?", "Aqui vale a proposta efetivamente apresentada ao cliente.", 0, 5, 0, "number"),
     ]
 
     a = st.session_state.answers
-    if a.get("contacts", 60) < 60 or a.get("quotes", 50) < 50:
+    if a.get("contacts", 0) < 60 or a.get("quotes", 0) < 50:
         questions.append((
             "lead_source",
             "De onde vêm principalmente esses contatos?",
             "Como seu volume de oportunidades está baixo, queremos entender qual fonte você usa para gerar novos contatos.",
-            "Indicações de Associados",
-            None,
-            None,
-            "source",
+            "", None, None, "source",
         ))
 
-    questions += [
-        ("sales", "Quantas vendas você fecha por mês?", "Use sua média dos últimos meses para evitar que um mês fora da curva distorça o resultado.", 20, 1, 0, "number"),
-        ("gain", "Quanto você ganha, em média, por venda?", "Pode ser sua comissão média ou o valor que efetivamente fica para você por venda.", 250.0, 10.0, 0.0, "money"),
-        ("target", "Quantas vendas você gostaria de fazer por mês?", "Agora vamos descobrir o que precisaria mudar no seu funil para chegar lá.", 30, 1, 0, "number"),
-    ]
+    questions.append(("sales", "Quantas vendas você fecha por mês?", "Use sua média dos últimos meses para evitar que um mês fora da curva distorça o resultado.", 0, 1, 0, "number"))
+    questions.append(("gain", "Quanto você ganha, em média, por venda?", "Pode ser sua comissão média ou o valor que efetivamente fica para você por venda.", 0.0, 10.0, 0.0, "money"))
+
+    if a.get("gain", 250) < 250:
+        questions.append((
+            "discount",
+            "Quando precisa fechar, quanto de desconto você costuma conceder?",
+            "Pense na média do que você realmente abre mão para conseguir a adesão.",
+            "", None, None, "discount",
+        ))
+
+    questions.append(("target", "Quantas vendas você gostaria de fazer por mês?", "Agora vamos descobrir o que precisaria mudar no seu processo para chegar lá.", 0, 1, 0, "number"))
     return questions
 
 
@@ -598,68 +646,94 @@ if not st.session_state.submitted:
         unsafe_allow_html=True,
     )
 
-    previous = st.session_state.answers.get(key, default)
-
     if kind == "money":
         value = st.number_input(
             "Sua resposta",
             min_value=float(minimum),
             step=float(step_size),
-            value=float(previous),
+            value=None,
             key=f"q_{key}",
             format="%.2f",
+            placeholder="Digite um valor",
         )
     elif kind == "source":
         options = [
+            "Selecione uma opção",
             "Ações de Rua",
             "Parceiros",
             "Indicações de Associados",
             "Tráfego Pago",
             "Outros",
         ]
-        current = previous if previous in options else "Indicações de Associados"
         value = st.selectbox(
             "Principal fonte de contatos",
             options,
-            index=options.index(current),
+            index=0,
             key="q_lead_source",
         )
+        if value == "Selecione uma opção":
+            value = None
+    elif kind == "discount":
+        discount_options = [
+            ("Selecione uma opção", None),
+            ("Quase nunca (0%)", 0.0),
+            ("Às vezes (até 10%)", 0.10),
+            ("Com frequência (até 30%)", 0.30),
+            ("Frequentemente (30% a 50%)", 0.50),
+            ("Muito frequentemente (50% a 70%)", 0.70),
+            ("Frequentemente preciso zerar a adesão", 1.00),
+        ]
+        selected = st.selectbox(
+            "Sua resposta",
+            [label for label, _ in discount_options],
+            index=0,
+            key="q_discount",
+        )
+        value = dict(discount_options)[selected]
     else:
         value = st.number_input(
             "Sua resposta",
             min_value=int(minimum),
             step=int(step_size),
-            value=int(previous),
+            value=None,
             key=f"q_{key}",
+            placeholder="Digite um número",
         )
-
-    st.session_state.answers[key] = value
 
     c1, c2 = st.columns(2)
     with c1:
         if step > 0 and st.button("← Voltar", use_container_width=True):
             st.session_state.step -= 1
+            for widget_key in [k for k in list(st.session_state.keys()) if k.startswith("q_")]:
+                st.session_state.pop(widget_key, None)
             st.rerun()
 
     with c2:
         label = "Ver meu diagnóstico →" if step == total - 1 else "Próxima pergunta →"
         if st.button(label, type="primary", use_container_width=True):
-            a = st.session_state.answers
             error = None
+            if value is None:
+                error = "Responda esta pergunta para continuar."
+            else:
+                st.session_state.answers[key] = value
 
-            if key == "conversations" and a["conversations"] > a["contacts"]:
+            a = st.session_state.answers
+
+            if not error and key == "conversations" and a["conversations"] > a["contacts"]:
                 error = "O número de conversas não pode ser maior que o número de contatos."
-            elif key == "quotes" and a["quotes"] > a["conversations"]:
+            elif not error and key == "quotes" and a["quotes"] > a["conversations"]:
                 error = "O número de cotações não pode ser maior que o número de conversas."
-            elif key == "sales" and a["sales"] > a["quotes"]:
+            elif not error and key == "sales" and a["sales"] > a["quotes"]:
                 error = "O número de vendas não pode ser maior que o número de cotações."
-            elif key == "target" and a["target"] < a["sales"]:
+            elif not error and key == "target" and a["target"] < a["sales"]:
                 error = "Sua meta precisa ser igual ou maior que suas vendas atuais."
 
             if error:
                 st.error(error)
             elif step < total - 1:
                 st.session_state.step += 1
+                for widget_key in [k for k in list(st.session_state.keys()) if k.startswith("q_")]:
+                    st.session_state.pop(widget_key, None)
                 st.rerun()
             else:
                 st.session_state.submitted = True
@@ -683,6 +757,7 @@ else:
         "gain": float(a["gain"]),
         "target": int(a["target"]),
         "lead_source": a.get("lead_source"),
+        "discount": float(a.get("discount", 0) or 0),
     }
     result = calculate(data)
     st.session_state.result = result
@@ -734,6 +809,8 @@ else:
                     "quotes_month": data["quotes"],
                     "sales_month": data["sales"],
                     "gain_per_sale": data["gain"],
+                    "discount_pct": data["discount"],
+                    "discount_label": result["discount_label"],
                     "target_sales": data["target"],
                     "lead_source": data.get("lead_source"),
                     "source_conversion_factor": result["source_factor"],
@@ -793,6 +870,33 @@ else:
             st.metric("Hoje você ganha", brl(result["current_revenue"]))
         with c3:
             st.metric("Sua meta", f"{data['target']} vendas")
+
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.metric("Cotação → venda", pct(result["rates"]["Cotação → venda"]))
+        with m2:
+            st.metric("Contato → venda", pct(result["contact_to_sale"]))
+        with m3:
+            cps = f"{result['contacts_per_sale']:.1f}" if result["contacts_per_sale"] is not None else "—"
+            st.metric("Contatos por venda", cps)
+
+        if result["contacts_per_sale"] is not None:
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    <div class="result-label">Sua meta de prospecção</div>
+                    <div style="color:#BDBDBD;margin:.5rem 0;">
+                        Hoje, a cada <strong>{result["contacts_per_sale"]:.1f} contatos</strong>,
+                        você fecha aproximadamente <strong>1 venda</strong>.
+                        Isso transforma sua conversão em uma meta prática de abordagem.
+                    </div>
+                    <div class="tip-text">
+                        Use esse número como referência para criar sua meta diária ou semanal de contatos.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         if result["low_volume"]:
             st.markdown(
@@ -871,6 +975,44 @@ else:
 
             info = insights_for(result["bottleneck"], result, data)
 
+        if data["gain"] < 250:
+            st.markdown(
+                f"""
+                <div class="danger-card">
+                    <div class="result-label">⚠️ Atenção à sua remuneração</div>
+                    <div class="result-value orange">Você ganha {brl(data["gain"])} por venda</div>
+                    <div style="color:#B8B8B8;margin-top:.45rem;">
+                        Esse valor está abaixo de R$ 250 por venda. Isso pode indicar que sua estrutura atual de comissão está limitando bastante o seu potencial de ganho. Vale comparar o que outras operações de proteção veicular pagam pelo mesmo esforço comercial antes de considerar esse valor como seu teto.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        if result["discount_insights"]:
+            dinfo = result["discount_insights"]
+            st.markdown(
+                f"""
+                <div class="danger-card">
+                    <div class="result-label">💸 Desconto identificado</div>
+                    <div class="result-value orange">{result["discount_label"]}</div>
+                    <div style="color:#B8B8B8;margin-top:.45rem;">{dinfo["text"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown("### 🛠️ Como defender mais valor")
+            for title, text in dinfo["actions"]:
+                st.markdown(
+                    f"""
+                    <div class="tip-card">
+                        <div class="tip-title">→ {title}</div>
+                        <div class="tip-text">{text}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
         # Funil
         st.markdown('<div class="section-title">Seu funil hoje</div>', unsafe_allow_html=True)
         f1, f2, f3, f4 = st.columns(4)
@@ -878,6 +1020,19 @@ else:
         f2.metric("Conversas", f"{data['conversations']}", pct(result["rates"]["Contato → conversa"]))
         f3.metric("Cotações", f"{data['quotes']}", pct(result["rates"]["Conversa → cotação"]))
         f4.metric("Vendas", f"{data['sales']}", pct(result["rates"]["Cotação → venda"]))
+
+        st.markdown(
+            f"""
+            <div class="result-card">
+                <div class="result-label">Conversão total do seu funil</div>
+                <div class="result-value orange">{pct(result["contact_to_sale"])}</div>
+                <div class="tip-text">
+                    Essa é a sua conversão de <strong>contato → venda</strong>: de todas as pessoas que entram no seu funil, essa é a parcela que termina em venda.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         # Meta personalizada
         st.markdown('<div class="section-title">🎯 O que precisa mudar para sua meta?</div>', unsafe_allow_html=True)
@@ -976,4 +1131,6 @@ else:
                 "lead_saved", "lead_name", "lead_phone", "celebrate"
             ]:
                 st.session_state.pop(k, None)
+            for widget_key in [k for k in list(st.session_state.keys()) if k.startswith("q_")]:
+                st.session_state.pop(widget_key, None)
             st.rerun()

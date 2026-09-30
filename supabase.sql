@@ -12,6 +12,8 @@ create table if not exists raio_x_leads (
     quotes_month integer,
     sales_month integer,
     gain_per_sale numeric,
+    discount_pct numeric,
+    discount_label text,
     target_sales integer,
     lead_source text,
     source_conversion_factor numeric,
@@ -36,3 +38,6 @@ alter table raio_x_leads add column if not exists source_quote_sale_rate numeric
 alter table raio_x_leads add column if not exists required_contacts numeric;
 alter table raio_x_leads add column if not exists additional_contacts numeric;
 alter table raio_x_leads add column if not exists focus_stage text;
+
+alter table raio_x_leads add column if not exists discount_pct numeric;
+alter table raio_x_leads add column if not exists discount_label text;
