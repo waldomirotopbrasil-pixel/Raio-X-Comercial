@@ -1,7 +1,12 @@
 
 import re
 import os
-from datetime import datetime, timezone
+import smtplib
+import secrets as py_secrets
+import hashlib
+import hmac
+from email.message import EmailMessage
+from datetime import datetime, timezone, timedelta
 
 import streamlit as st
 
@@ -280,6 +285,26 @@ st.markdown(
             font-size:.76rem;
             margin-top:.7rem;
         }}
+
+        @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap");
+        html, body, [class*="st-"], .stApp {{ font-family:"Montserrat",Arial,sans-serif !important; }}
+        input, textarea, select, button, [data-testid="stNumberInput"] input {{
+            font-family:"Montserrat",Arial,sans-serif !important; font-weight:700 !important;
+        }}
+        [data-testid="stMetricValue"] {{ font-family:"Montserrat",Arial,sans-serif !important; font-weight:900 !important; }}
+
+        .profile-card {{
+            background:radial-gradient(circle at 50% 0%,rgba(255,102,0,.22),transparent 54%),linear-gradient(145deg,#191919,#0b0b0b);
+            border:1px solid rgba(255,102,0,.52); border-radius:26px; padding:1.5rem 1.25rem;
+            text-align:center; margin:0 0 1.2rem; box-shadow:0 0 42px rgba(255,102,0,.09);
+        }}
+        .profile-kicker {{ color:#FF9A5A; font-size:.74rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }}
+        .profile-name {{ color:#fff; font-size:clamp(1.55rem,5vw,2.2rem); line-height:1.08; font-weight:900; margin:.35rem 0 .45rem; }}
+        .profile-desc {{ color:#BDBDBD; font-size:.9rem; line-height:1.5; max-width:580px; margin:0 auto; }}
+        .admin-float {{ position:fixed; right:18px; bottom:16px; z-index:9999; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #2b2b2b; background:rgba(12,12,12,.86); border-radius:50%; box-shadow:0 5px 20px rgba(0,0,0,.35); backdrop-filter:blur(8px); }}
+        .admin-float a {{ color:#777; text-decoration:none; font-size:14px; }}
+        .admin-float a:hover {{ color:#FF6600; }}
+        .admin-shell {{ max-width:1200px; margin:0 auto; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -304,6 +329,215 @@ def clean_phone(phone):
 def validate_phone(phone):
     p = clean_phone(phone)
     return 10 <= len(p) <= 13
+
+
+def get_secret(name, default=None):
+    try:
+        value = st.secrets.get(name, None)
+        if value is not None:
+            return value
+    except Exception:
+        pass
+    return os.getenv(name, default)
+
+
+def get_smtp_config():
+    try:
+        cfg = st.secrets.get("smtp", {})
+        if cfg:
+            return {
+                "host": cfg.get("host", "smtp.gmail.com"),
+                "port": int(cfg.get("port", 465)),
+                "username": cfg.get("username", ""),
+                "password": cfg.get("password", ""),
+                "from_email": cfg.get("from_email", cfg.get("username", "")),
+                "from_name": cfg.get("from_name", "Raio-X do Consultor"),
+            }
+    except Exception:
+        pass
+    return {
+        "host": os.getenv("SMTP_HOST", "smtp.gmail.com"),
+        "port": int(os.getenv("SMTP_PORT", "465")),
+        "username": os.getenv("SMTP_USERNAME", ""),
+        "password": os.getenv("SMTP_PASSWORD", ""),
+        "from_email": os.getenv("SMTP_FROM_EMAIL", os.getenv("SMTP_USERNAME", "")),
+        "from_name": os.getenv("SMTP_FROM_NAME", "Raio-X do Consultor"),
+    }
+
+
+def get_admin_emails():
+    raw = get_secret("ADMIN_EMAILS", None)
+    if raw is None:
+        raw = get_smtp_config().get("username", "")
+    if isinstance(raw, str):
+        raw = [x.strip() for x in raw.split(",") if x.strip()]
+    return {str(x).strip().lower() for x in (raw or []) if str(x).strip()}
+
+
+def send_admin_otp(email, code):
+    smtp = get_smtp_config()
+    if not smtp["username"] or not smtp["password"] or not smtp["from_email"]:
+        return False, "Configuração SMTP incompleta."
+
+    msg = EmailMessage()
+    msg["Subject"] = "Seu código de acesso — Raio-X do Consultor"
+    msg["From"] = f'{smtp["from_name"]} <{smtp["from_email"]}>'
+    msg["To"] = email
+    msg.set_content(
+        f"Seu código de acesso à Área Administrativa do Raio-X do Consultor é: {code}\n\n"
+        "Este código expira em 10 minutos. Se você não solicitou o acesso, ignore este e-mail."
+    )
+    try:
+        with smtplib.SMTP_SSL(smtp["host"], smtp["port"], timeout=20) as server:
+            server.login(smtp["username"], smtp["password"])
+            server.send_message(msg)
+        return True, "Código enviado."
+    except Exception:
+        return False, "Não foi possível enviar o código agora. Verifique o SMTP."
+
+
+def request_admin_otp(email):
+    allowed = get_admin_emails()
+    email = email.strip().lower()
+    if email not in allowed:
+        # Resposta genérica evita confirmar se um endereço está cadastrado.
+        return False, "Se o e-mail estiver autorizado, o código será enviado."
+
+    code = f"{py_secrets.randbelow(1_000_000):06d}"
+    otp_secret = str(get_secret("OTP_SECRET", ""))
+    if not otp_secret:
+        return False, "OTP_SECRET não configurado."
+    digest = hmac.new(
+        otp_secret.encode("utf-8"),
+        f"{email}:{code}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    ok, msg = send_admin_otp(email, code)
+    if ok:
+        st.session_state.admin_otp_hash = digest
+        st.session_state.admin_otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+        st.session_state.admin_otp_email = email
+        st.session_state.admin_otp_attempts = 0
+    return ok, msg
+
+
+def verify_admin_otp(code):
+    expected = st.session_state.get("admin_otp_hash")
+    expires = st.session_state.get("admin_otp_expires")
+    email = st.session_state.get("admin_otp_email", "")
+    if not expected or not expires or not email:
+        return False
+    if datetime.now(timezone.utc) > expires:
+        return False
+    st.session_state.admin_otp_attempts = st.session_state.get("admin_otp_attempts", 0) + 1
+    if st.session_state.admin_otp_attempts > 5:
+        return False
+    otp_secret = str(get_secret("OTP_SECRET", ""))
+    if not otp_secret:
+        return False
+    digest = hmac.new(
+        otp_secret.encode("utf-8"),
+        f"{email}:{str(code).strip()}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(digest, expected)
+
+
+def classify_profile(data, result):
+    sales = data["sales"]
+    quote_sale = result["rates"]["Cotação → venda"]
+    contact_sale = result["contact_to_sale"]
+
+    score = 0
+    score += 3 if sales >= 20 else 2 if sales >= 10 else 1 if sales >= 5 else 0
+    score += 3 if quote_sale >= .25 else 2 if quote_sale >= .20 else 1 if quote_sale >= .15 else 0
+    score += 3 if contact_sale >= .10 else 2 if contact_sale >= .075 else 1 if contact_sale >= .05 else 0
+
+    if score >= 7:
+        return {"name":"Consultor Avançado", "level":4, "description":"Você combina volume de vendas com boa eficiência comercial. Seu próximo salto tende a vir de escala, previsibilidade e refinamento do processo."}
+    if score >= 5:
+        return {"name":"Consultor Consistente", "level":3, "description":"Seu processo já apresenta sinais de consistência. Existe uma base comercial sobre a qual dá para construir mais previsibilidade."}
+    if score >= 3:
+        return {"name":"Consultor em Desenvolvimento", "level":2, "description":"Você já tem operação comercial acontecendo. O próximo passo é transformar esforço em um processo mais previsível."}
+    return {"name":"Consultor em Formação", "level":1, "description":"Você está construindo sua operação comercial. Mais volume, rotina e acompanhamento das conversões podem acelerar sua evolução."}
+
+
+def admin_rows():
+    sb = get_supabase()
+    if sb is None:
+        return None, "Supabase não configurado."
+    try:
+        response = sb.table("raio_x_leads").select("*").order("created_at", desc=True).execute()
+        return response.data or [], None
+    except Exception:
+        return None, "Não foi possível carregar os leads agora."
+
+
+def render_admin():
+    st.markdown('<div class="admin-shell">', unsafe_allow_html=True)
+    st.markdown("## 🔐 Área Administrativa")
+    st.caption("Acesso restrito por código enviado ao e-mail autorizado.")
+
+    if not st.session_state.get("admin_authenticated"):
+        if not st.session_state.get("admin_otp_hash"):
+            email = st.text_input("E-mail cadastrado", placeholder="seu@email.com")
+            if st.button("Enviar código", type="primary", use_container_width=True):
+                if not email.strip() or "@" not in email:
+                    st.error("Informe um e-mail válido.")
+                else:
+                    ok, msg = request_admin_otp(email)
+                    if ok:
+                        st.success("Código enviado. Confira seu e-mail.")
+                    else:
+                        st.info(msg)
+        else:
+            st.info(f"Código enviado para {st.session_state.get('admin_otp_email', '')}.")
+            code = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("Entrar", type="primary", use_container_width=True):
+                    if verify_admin_otp(code):
+                        st.session_state.admin_authenticated = True
+                        st.session_state.pop("admin_otp_hash", None)
+                        st.session_state.pop("admin_otp_expires", None)
+                        st.session_state.pop("admin_otp_attempts", None)
+                        st.rerun()
+                    else:
+                        st.error("Código inválido ou expirado.")
+            with c2:
+                if st.button("Reenviar código", use_container_width=True):
+                    email = st.session_state.get("admin_otp_email", "")
+                    ok, msg = request_admin_otp(email)
+                    st.info(msg if not ok else "Novo código enviado.")
+    else:
+        c1, c2 = st.columns([4,1])
+        with c1:
+            st.markdown("### Leads captados")
+        with c2:
+            if st.button("Sair", use_container_width=True):
+                st.session_state.admin_authenticated = False
+                st.rerun()
+
+        rows, error = admin_rows()
+        if error:
+            st.error(error)
+        else:
+            st.caption(f"{len(rows)} diagnóstico(s) registrado(s)")
+            import pandas as pd
+            df = pd.DataFrame(rows)
+            wanted = [
+                "created_at","name","whatsapp","city","experience","works_protection",
+                "profile_name","contacts_month","conversations_month","quotes_month","sales_month",
+                "gain_per_sale","discount_label","lead_source","rate_quote_sale","rate_contact_sale",
+                "contacts_per_sale","bottleneck","target_sales"
+            ]
+            cols = [c for c in wanted if c in df.columns]
+            if cols:
+                st.dataframe(df[cols], use_container_width=True, hide_index=True)
+            else:
+                st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def get_supabase():
@@ -571,6 +805,17 @@ def render_logo():
         )
 
 
+def is_admin_route():
+    try:
+        return st.query_params.get("admin") == "1"
+    except Exception:
+        return False
+
+
+if is_admin_route():
+    render_admin()
+    st.stop()
+
 # ============================================================
 # STATE
 # ============================================================
@@ -584,6 +829,8 @@ for key, default in [
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
+
+st.markdown('<div class="admin-float"><a href="?admin=1" title="Área administrativa">⚙</a></div>', unsafe_allow_html=True)
 
 render_logo()
 
@@ -760,6 +1007,8 @@ else:
         "discount": float(a.get("discount", 0) or 0),
     }
     result = calculate(data)
+    profile = classify_profile(data, result)
+    result["profile"] = profile
     st.session_state.result = result
 
     if not st.session_state.show_result:
@@ -826,6 +1075,10 @@ else:
                     "current_revenue": result["current_revenue"],
                     "target_revenue": result["target_revenue"],
                     "extra_revenue": result["extra_revenue"],
+                    "profile_name": profile["name"],
+                    "profile_level": profile["level"],
+                    "rate_contact_sale": result["contact_to_sale"],
+                    "contacts_per_sale": result["contacts_per_sale"],
                     "source": "raio_x_comercial",
                 }
 
@@ -860,6 +1113,17 @@ else:
                 unsafe_allow_html=True,
             )
             st.session_state.celebrate = False
+
+        st.markdown(
+            f"""
+            <div class="profile-card">
+                <div class="profile-kicker">SEU PERFIL COMERCIAL</div>
+                <div class="profile-name">Você é um {profile["name"]}</div>
+                <div class="profile-desc">{profile["description"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         st.markdown("## 🔎 Seu diagnóstico")
 
