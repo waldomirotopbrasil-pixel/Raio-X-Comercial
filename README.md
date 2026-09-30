@@ -1,41 +1,28 @@
+# Raio-X Comercial — MVP v2
 
-# Raio-X Comercial — MVP
+Ferramenta de diagnóstico comercial para consultores.
 
-MVP em Streamlit + Supabase, com custo inicial potencialmente zero.
-
-## O que faz
-- Uma única tela.
-- Coleta o funil mensal do consultor.
-- Calcula conversões entre etapas.
-- Identifica o menor índice de conversão como principal gargalo.
-- Usa a meta de vendas informada pelo próprio consultor.
-- Calcula qual taxa precisaria ser atingida para chegar à meta, mantendo as demais etapas constantes.
-- Calcula ganho atual e potencial adicional usando o ganho médio por venda.
-- Exige WhatsApp antes de liberar o diagnóstico.
-- Salva o lead no Supabase.
+## Mudanças desta versão
+- Experiência de uma pergunta por vez.
+- Barra de progresso.
+- Interface dark com comunicação visual preta + laranja.
+- Logo incluído em `logo.png`.
+- Captura de WhatsApp antes de liberar o diagnóstico.
+- Diagnóstico do principal gargalo.
+- Meta personalizada de vendas.
+- Cálculo do potencial financeiro.
+- Insights e 3 ações práticas por tipo de gargalo.
+- Supabase continua opcional no desenvolvimento local.
 
 ## Rodar localmente
-
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Configure as variáveis:
+## Deploy
+No Render, configure:
 - SUPABASE_URL
 - SUPABASE_KEY
 
-## Supabase
-Execute `supabase.sql` no SQL Editor.
-
-### Segurança
-Para produção, prefira uma arquitetura em que a chave `service_role` fique apenas no backend/servidor, nunca no navegador.
-O app deste MVP lê `SUPABASE_URL` e `SUPABASE_KEY` do ambiente. Se usar a anon key, configure RLS/policies corretamente.
-
-## Deploy
-No Render:
-- Runtime: Python
-- Build: `pip install -r requirements.txt`
-- Start: `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT`
-
-Configure `SUPABASE_URL` e `SUPABASE_KEY` nas Environment Variables.
+Nunca publique credenciais reais no GitHub.
