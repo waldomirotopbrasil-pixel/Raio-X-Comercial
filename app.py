@@ -1818,12 +1818,11 @@ else:
         )
 
         # Banner final
-if os.path.exists("banner.png"):
-    st.markdown('<div class="final-banner">', unsafe_allow_html=True)
-    st.image("banner.png", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        if os.path.exists("banner.png"):
+            st.markdown('<div class="final-banner">', unsafe_allow_html=True)
+            st.image("banner.png", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        
         st.markdown("### 💡 3 ações para testar")
         for title, text in info["actions"]:
             st.markdown(
