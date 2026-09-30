@@ -684,6 +684,9 @@ def calculate(data):
         "Contato → venda": contact_to_sale,
     }
 
+    funnel_stages = ("Contato → conversa", "Conversa → cotação", "Cotação → venda")
+    stage_rates = {s: rates[s] for s in funnel_stages}
+
     low_volume = contacts < 60 or quotes < 50
 
     # Se o volume estiver baixo, o diagnóstico passa a tratar volume
@@ -714,7 +717,7 @@ def calculate(data):
         needed_rate = None
         current_rate = None
         achievable = False
-    elif "Cotação → venda" in dict(viable) and r3 == min(rates.values()):
+    elif "Cotação → venda" in dict(viable) and r3 == min(stage_rates.values()):
         focus_stage = "Cotação → venda"
         needed_rate = dict(viable)["Cotação → venda"]
         current_rate = r3
@@ -727,7 +730,7 @@ def calculate(data):
         current_rate = current_rates[focus_stage]
         achievable = needed_rate <= 1
     else:
-        focus_stage = min(rates, key=rates.get)
+        focus_stage = min(stage_rates, key=stage_rates.get)
         needed_rate = next(
             (req for stage, req in candidates if stage == focus_stage),
             1.0,
@@ -755,10 +758,7 @@ def calculate(data):
 
     return {
         "rates": rates,
-        "bottleneck": min(
-    ("Contato → conversa", "Conversa → cotação", "Cotação → venda"),
-    key=lambda s: rates[s],
-        ),
+        "bottleneck": min(stage_rates, key=stage_rates.get),
         "low_volume": low_volume,
         "current_revenue": current_revenue,
         "target_revenue": target_revenue,
@@ -1126,12 +1126,6 @@ else:
                     "profile_level": profile["level"],
                     "rate_contact_sale": result["contact_to_sale"],
                     "contacts_per_sale": result["contacts_per_sale"],
-                    "source": "raio_x_comercial",
-                }
-
-        else:
-                lead = {
-                    ...
                     "source": "raio_x_comercial",
                 }
 
