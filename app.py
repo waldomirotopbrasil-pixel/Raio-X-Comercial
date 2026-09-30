@@ -1129,7 +1129,13 @@ else:
                     "source": "raio_x_comercial",
                 }
 
-        ok, msg = save_lead(lead)
+else:
+                lead = {
+                    ...
+                    "source": "raio_x_comercial",
+                }
+
+                ok, msg = save_lead(lead)
                 st.session_state.lead_error = None if ok else msg
                 st.session_state.lead_saved = ok
                 st.session_state.lead_name = name.strip()
