@@ -577,6 +577,22 @@ st.markdown(
             margin: .35rem 0 .45rem;
         }}
 
+        .final-banner {{
+            width: 100%;
+            margin: 28px 0 24px 0;
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            line-height: 0;
+        }}
+
+        .final-banner img {{
+            width: 100%;
+            aspect-ratio: 4 / 1;
+            object-fit: cover;
+            display: block;
+        }}
+
         .profile-desc {{
             color: var(--text-secondary);
             font-size: .9rem;
@@ -1801,6 +1817,13 @@ else:
             unsafe_allow_html=True,
         )
 
+        # Banner final
+if os.path.exists("banner.png"):
+    st.markdown('<div class="final-banner">', unsafe_allow_html=True)
+    st.image("banner.png", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+        
         st.markdown("### 💡 3 ações para testar")
         for title, text in info["actions"]:
             st.markdown(
