@@ -1412,7 +1412,7 @@ render_logo()
 
 def build_questions():
     questions = [
-        ("contacts", "Quantas Pessoas você aborda por Mês?", "Pense em WhatsApp, Instagram, Indicações Recebidas, tráfego Pago, Parcerias e Prospecção.", 0, 10, 1, "number"),
+        ("contacts", "Quantas Pessoas você aborda, ou te chamam, por mês?", "Pense em WhatsApp, Instagram, Indicações Recebidas, tráfego Pago, Parcerias e Prospecção.", 0, 10, 1, "number"),
         ("conversations", "Desses contatos, com quantos você realmente conversa?", "Considere apenas quem respondeu ou teve uma conversa real com você.", 0, 10, 0, "number"),
         ("quotes", "Para quantos você chega a apresentar uma cotação ou proposta?", "Aqui vale a proposta efetivamente apresentada ao cliente.", 0, 5, 0, "number"),
     ]
