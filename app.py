@@ -1129,7 +1129,8 @@ else:
                     "source": "raio_x_comercial",
                 }
 
-                ok, msg = save_lead(lead)
+        ok, msg = save_lead(lead)
+                st.session_state.lead_error = None if ok else msg
                 st.session_state.lead_saved = ok
                 st.session_state.lead_name = name.strip()
                 st.session_state.lead_phone = clean_phone(whatsapp)
@@ -1143,6 +1144,9 @@ else:
         )
 
     if st.session_state.get("show_result"):
+        if st.session_state.get("lead_error"):
+            st.warning(st.session_state.lead_error)
+
         # Festa: acontece uma vez, exatamente quando o diagnóstico é liberado.
         if st.session_state.get("celebrate"):
             st.balloons()
