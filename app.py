@@ -289,9 +289,9 @@ st.markdown(
         @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap");
         html, body, [class*="st-"], .stApp {{ font-family:"Montserrat",Arial,sans-serif !important; }}
         input, textarea, select, button, [data-testid="stNumberInput"] input {{
-            font-family:"Montserrat",Arial,sans-serif !important; font-weight:700 !important;
+            font-family:"Montserrat",Arial,sans-serif !important; font-weight:600 !important;
         }}
-        [data-testid="stMetricValue"] {{ font-family:"Montserrat",Arial,sans-serif !important; font-weight:900 !important; }}
+        [data-testid="stMetricValue"] {{ font-family:"Montserrat",Arial,sans-serif !important; font-weight:700 !important; }}
 
         .profile-card {{
             background:radial-gradient(circle at 50% 0%,rgba(255,102,0,.22),transparent 54%),linear-gradient(145deg,#191919,#0b0b0b);
@@ -301,8 +301,8 @@ st.markdown(
         .profile-kicker {{ color:#FF9A5A; font-size:.74rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }}
         .profile-name {{ color:#fff; font-size:clamp(1.55rem,5vw,2.2rem); line-height:1.08; font-weight:900; margin:.35rem 0 .45rem; }}
         .profile-desc {{ color:#BDBDBD; font-size:.9rem; line-height:1.5; max-width:580px; margin:0 auto; }}
-        .admin-float {{ position:fixed; right:18px; bottom:16px; z-index:9999; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #2b2b2b; background:rgba(12,12,12,.86); border-radius:50%; box-shadow:0 5px 20px rgba(0,0,0,.35); backdrop-filter:blur(8px); }}
-        .admin-float a {{ color:#777; text-decoration:none; font-size:14px; }}
+        .admin-float {{ position:fixed; left:18px; bottom:16px; z-index:9999; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #2b2b2b; background:rgba(12,12,12,.86); border-radius:50%; box-shadow:0 5px 20px rgba(0,0,0,.35); backdrop-filter:blur(8px); }}
+        .admin-float a {{ color:#777; text-decoration:none; font-size:13px; }}
         .admin-float a:hover {{ color:#FF6600; }}
         .admin-shell {{ max-width:1200px; margin:0 auto; }}
     </style>
@@ -349,7 +349,7 @@ def get_smtp_config():
                 "host": cfg.get("host", "smtp.gmail.com"),
                 "port": int(cfg.get("port", 465)),
                 "username": cfg.get("username", ""),
-                "password": cfg.get("password", ""),
+                "password": str(cfg.get("password", "")).replace(" ", ""),
                 "from_email": cfg.get("from_email", cfg.get("username", "")),
                 "from_name": cfg.get("from_name", "Raio-X do Consultor"),
             }
@@ -359,7 +359,7 @@ def get_smtp_config():
         "host": os.getenv("SMTP_HOST", "smtp.gmail.com"),
         "port": int(os.getenv("SMTP_PORT", "465")),
         "username": os.getenv("SMTP_USERNAME", ""),
-        "password": os.getenv("SMTP_PASSWORD", ""),
+        "password": os.getenv("SMTP_PASSWORD", "").replace(" ", ""),
         "from_email": os.getenv("SMTP_FROM_EMAIL", os.getenv("SMTP_USERNAME", "")),
         "from_name": os.getenv("SMTP_FROM_NAME", "Raio-X do Consultor"),
     }
@@ -387,13 +387,36 @@ def send_admin_otp(email, code):
         f"Seu código de acesso à Área Administrativa do Raio-X do Consultor é: {code}\n\n"
         "Este código expira em 10 minutos. Se você não solicitou o acesso, ignore este e-mail."
     )
-    try:
-        with smtplib.SMTP_SSL(smtp["host"], smtp["port"], timeout=20) as server:
-            server.login(smtp["username"], smtp["password"])
-            server.send_message(msg)
-        return True, "Código enviado."
-    except Exception:
-        return False, "Não foi possível enviar o código agora. Verifique o SMTP."
+
+    # Gmail aceita SSL na 465 e STARTTLS na 587. Tentar os dois evita que uma
+    # restrição de rede do host de deploy impeça o envio mesmo com o Secret correto.
+    attempts = []
+    ports = [smtp["port"]]
+    if smtp["port"] == 465:
+        ports.append(587)
+    elif smtp["port"] == 587:
+        ports.append(465)
+
+    for port in ports:
+        try:
+            if port == 465:
+                with smtplib.SMTP_SSL(smtp["host"], port, timeout=20) as server:
+                    server.login(smtp["username"], smtp["password"])
+                    server.send_message(msg)
+            else:
+                with smtplib.SMTP(smtp["host"], port, timeout=20) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    server.login(smtp["username"], smtp["password"])
+                    server.send_message(msg)
+            return True, "Código enviado."
+        except Exception as exc:
+            # Não expõe credenciais; apenas registra o tipo de falha para o usuário
+            # autorizado conseguir diagnosticar o deploy.
+            attempts.append(f"porta {port}: {type(exc).__name__}")
+
+    return False, "Não foi possível enviar o código. Verifique o SMTP/Gmail. " + " | ".join(attempts)
 
 
 def request_admin_otp(email):
@@ -407,18 +430,26 @@ def request_admin_otp(email):
     otp_secret = str(get_secret("OTP_SECRET", ""))
     if not otp_secret:
         return False, "OTP_SECRET não configurado."
+
     digest = hmac.new(
         otp_secret.encode("utf-8"),
         f"{email}:{code}".encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
+
+    # Guarda o desafio antes do envio. Assim, mesmo que o primeiro envio falhe,
+    # a tela já muda para o campo de código e permite um novo envio.
+    st.session_state.admin_otp_hash = digest
+    st.session_state.admin_otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    st.session_state.admin_otp_email = email
+    st.session_state.admin_otp_attempts = 0
+
     ok, msg = send_admin_otp(email, code)
-    if ok:
-        st.session_state.admin_otp_hash = digest
-        st.session_state.admin_otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
-        st.session_state.admin_otp_email = email
-        st.session_state.admin_otp_attempts = 0
-    return ok, msg
+    st.session_state.admin_otp_send_ok = ok
+    st.session_state.admin_otp_send_message = msg
+    if not ok:
+        return False, msg
+    return True, msg
 
 
 def verify_admin_otp(code):
@@ -488,11 +519,21 @@ def render_admin():
                     ok, msg = request_admin_otp(email)
                     if ok:
                         st.success("Código enviado. Confira seu e-mail.")
+                        st.rerun()
                     else:
+                        # Para endereço não autorizado, mantém a mensagem genérica.
+                        # Para SMTP autorizado, mostra a falha técnica sem revelar segredo.
                         st.info(msg)
+                        if st.session_state.get("admin_otp_hash"):
+                            st.rerun()
         else:
-            st.info(f"Código enviado para {st.session_state.get('admin_otp_email', '')}.")
-            code = st.text_input("Código de 6 dígitos", max_chars=6, placeholder="000000")
+            if st.session_state.get("admin_otp_send_ok", False):
+                st.success(f"Código enviado para {st.session_state.get('admin_otp_email', '')}.")
+            else:
+                st.warning(st.session_state.get("admin_otp_send_message", "O código foi gerado, mas o envio por e-mail falhou."))
+                st.caption("O campo abaixo continua disponível para que você possa reenviar o código.")
+            st.caption("O código expira em 10 minutos e pode ser tentado até 5 vezes.")
+            code = st.text_input("Digite o código de 6 dígitos", max_chars=6, placeholder="000000", key="admin_code")
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("Entrar", type="primary", use_container_width=True):
@@ -501,6 +542,8 @@ def render_admin():
                         st.session_state.pop("admin_otp_hash", None)
                         st.session_state.pop("admin_otp_expires", None)
                         st.session_state.pop("admin_otp_attempts", None)
+                        st.session_state.pop("admin_otp_send_ok", None)
+                        st.session_state.pop("admin_otp_send_message", None)
                         st.rerun()
                     else:
                         st.error("Código inválido ou expirado.")
@@ -509,6 +552,7 @@ def render_admin():
                     email = st.session_state.get("admin_otp_email", "")
                     ok, msg = request_admin_otp(email)
                     st.info(msg if not ok else "Novo código enviado.")
+                    st.rerun()
     else:
         c1, c2 = st.columns([4,1])
         with c1:
