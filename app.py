@@ -1,4 +1,3 @@
-
 import re
 import os
 import smtplib
@@ -15,11 +14,11 @@ try:
 except Exception:
     create_client = None
 
-
 # ============================================================
 # CONFIG
 # ============================================================
 # O logo transparente também funciona como favicon.
+
 st.set_page_config(
     page_title="Raio-X Comercial | David Fernandes",
     page_icon="logo.png",
@@ -33,171 +32,709 @@ TEXT = "#F5F5F5"
 
 st.markdown(
     f"""
-    <style>
-        /* ============================================================
-           SISTEMA DE CORES
-           ============================================================ */
+<style>
+/* ============================================================
+   SISTEMA DE CORES
+   ============================================================ */
 
+:root {{
+        /* Tema escuro — padrão */
+        --bg: #080808;
+        --surface: #111111;
+        --surface-2: #171717;
+        --surface-3: #1D1D1D;
+        --border: #292929;
+
+        --text: #F5F5F5;
+        --text-secondary: #BDBDBD;
+        --text-muted: #969696;
+        --text-faint: #6F6F6F;
+
+        --progress-bg: #242424;
+
+        --orange: #FF6600;
+        --orange-light: #FF9A5A;
+
+        --danger-bg: rgba(255,102,0,.08);
+        --danger-border: rgba(255,102,0,.38);
+
+        --shadow: rgba(0,0,0,.22);
+        --shadow-strong: rgba(0,0,0,.35);
+    }}
+
+
+    /* ============================================================
+       TEMA CLARO
+       O navegador/dispositivo informa automaticamente o tema.
+       ============================================================ */
+
+    @media (prefers-color-scheme: light) {{
         :root {{
-            /* Tema escuro — padrão */
-            --bg: #080808;
-            --surface: #111111;
-            --surface-2: #171717;
-            --surface-3: #1D1D1D;
-            --border: #292929;
+            --bg: #F5F5F5;
+            --surface: #FFFFFF;
+            --surface-2: #FFFFFF;
+            --surface-3: #F0F0F0;
+            --border: #D9D9D9;
 
-            --text: #F5F5F5;
-            --text-secondary: #BDBDBD;
-            --text-muted: #969696;
-            --text-faint: #6F6F6F;
+            --text: #171717;
+            --text-secondary: #555555;
+            --text-muted: #707070;
+            --text-faint: #888888;
 
-            --progress-bg: #242424;
+            --progress-bg: #DCDCDC;
 
-            --orange: #FF6600;
-            --orange-light: #FF9A5A;
+            --orange: #F05A00;
+            --orange-light: #C94C00;
 
-            --danger-bg: rgba(255,102,0,.08);
-            --danger-border: rgba(255,102,0,.38);
+            --danger-bg: rgba(240,90,0,.07);
+            --danger-border: rgba(240,90,0,.32);
 
-            --shadow: rgba(0,0,0,.22);
-            --shadow-strong: rgba(0,0,0,.35);
+            --shadow: rgba(0,0,0,.08);
+            --shadow-strong: rgba(0,0,0,.14);
         }}
+    }}
 
 
-        /* ============================================================
-           TEMA CLARO
-           O navegador/dispositivo informa automaticamente o tema.
-           ============================================================ */
+    /* ============================================================
+       STREAMLIT — BASE
+       ============================================================ */
 
-        @media (prefers-color-scheme: light) {{
-            :root {{
-                --bg: #F5F5F5;
-                --surface: #FFFFFF;
-                --surface-2: #FFFFFF;
-                --surface-3: #F0F0F0;
-                --border: #D9D9D9;
+    #MainMenu,
+    footer,
+    header {{
+        visibility: hidden;
+    }}
 
-                --text: #171717;
-                --text-secondary: #555555;
-                --text-muted: #707070;
-                --text-faint: #888888;
+    .stApp {{
+        background: var(--bg) !important;
+        color: var(--text) !important;
+    }}
 
-                --progress-bg: #DCDCDC;
+    .block-container {{
+        max-width: 760px;
+        padding-top: 1.2rem;
+        padding-bottom: 4rem;
+    }}
 
-                --orange: #F05A00;
-                --orange-light: #C94C00;
-
-                --danger-bg: rgba(240,90,0,.07);
-                --danger-border: rgba(240,90,0,.32);
-
-                --shadow: rgba(0,0,0,.08);
-                --shadow-strong: rgba(0,0,0,.14);
-            }}
-        }}
+    html,
+    body,
+    [class*="st-"],
+    .stApp {{
+        font-family: "Montserrat", Arial, sans-serif !important;
+    }}
 
 
-        /* ============================================================
-           STREAMLIT — BASE
-           ============================================================ */
+    /* ============================================================
+       LABELS DOS INPUTS
+       ============================================================ */
 
-        #MainMenu,
-        footer,
-        header {{
-            visibility: hidden;
-        }}
+    div[data-testid="stNumberInput"] label,
+    div[data-testid="stTextInput"] label,
+    div[data-testid="stSelectbox"] label {{
+        color: var(--text-secondary) !important;
+        font-weight: 650 !important;
+    }}
+
+
+    /* ============================================================
+       INPUTS / SELECTS
+       ============================================================ */
+
+    input,
+    textarea,
+    select,
+    button,
+    [data-testid="stNumberInput"] input {{
+        font-family: "Montserrat", Arial, sans-serif !important;
+        font-weight: 600 !important;
+    }}
+
+    div[data-baseweb="input"],
+    div[data-baseweb="select"],
+    div[data-baseweb="textarea"] {{
+        background: var(--surface) !important;
+        border-color: var(--border) !important;
+    }}
+
+    div[data-baseweb="input"] input,
+    div[data-baseweb="select"] input,
+    div[data-baseweb="textarea"] textarea {{
+        color: var(--text) !important;
+        background: var(--surface) !important;
+        caret-color: var(--orange) !important;
+    }}
+
+    div[data-baseweb="input"] input::placeholder,
+    div[data-baseweb="textarea"] textarea::placeholder {{
+        color: var(--text-muted) !important;
+        opacity: 1 !important;
+    }}
+
+    div[data-baseweb="select"] > div {{
+        background: var(--surface) !important;
+        border-color: var(--border) !important;
+    }}
+
+    div[data-baseweb="select"] span {{
+        color: var(--text) !important;
+    }}
+
+    /* Dropdown aberto */
+    [data-baseweb="popover"] {{
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+    }}
+
+    [role="option"] {{
+        background: var(--surface) !important;
+        color: var(--text) !important;
+    }}
+
+    [role="option"]:hover {{
+        background: var(--surface-3) !important;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        font-family: "Montserrat", Arial, sans-serif !important;
+        font-weight: 700 !important;
+        color: var(--text) !important;
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        color: var(--text-muted) !important;
+    }}
+
+
+    /* ============================================================
+       MARCA / HERO
+       ============================================================ */
+
+    .brand {{
+        text-align: center;
+        margin-bottom: 1.35rem;
+    }}
+
+    .brand img {{
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 24px rgba(255,102,0,.20));
+    }}
+
+    .eyebrow {{
+        color: var(--orange);
+        font-size: .76rem;
+        font-weight: 850;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        margin-top: .55rem;
+    }}
+
+    .hero-title {{
+        font-size: clamp(2rem, 7vw, 3.15rem);
+        line-height: 1.03;
+        font-weight: 900;
+        margin: .35rem 0 .6rem;
+        color: var(--text);
+    }}
+
+    .hero-sub {{
+        color: var(--text-secondary);
+        font-size: 1.03rem;
+        line-height: 1.55;
+        max-width: 620px;
+        margin: 0 auto;
+    }}
+
+
+    /* ============================================================
+       CARD DE PERGUNTA
+       ============================================================ */
+
+    .question-card {{
+        background: linear-gradient(
+            145deg,
+            var(--surface-2),
+            var(--surface)
+        );
+
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 1.35rem 1.25rem;
+        margin-top: 1.15rem;
+        box-shadow: 0 15px 45px var(--shadow);
+    }}
+
+    .step {{
+        color: var(--orange);
+        font-size: .77rem;
+        font-weight: 850;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }}
+
+    .question {{
+        font-size: 1.5rem;
+        line-height: 1.2;
+        font-weight: 850;
+        color: var(--text);
+        margin: .35rem 0 .4rem;
+    }}
+
+    .helper {{
+        color: var(--text-muted);
+        font-size: .92rem;
+        line-height: 1.45;
+        margin-bottom: .8rem;
+    }}
+
+    .progress-wrap {{
+        background: var(--progress-bg);
+        height: 6px;
+        border-radius: 99px;
+        overflow: hidden;
+        margin: .8rem 0 1.1rem;
+    }}
+
+    .progress-bar {{
+        height: 100%;
+        background: var(--orange);
+        border-radius: 99px;
+    }}
+
+    .mini-note {{
+        color: var(--text-faint);
+        font-size: .82rem;
+        text-align: center;
+        margin-top: .55rem;
+    }}
+
+
+    /* ============================================================
+       CARDS DE RESULTADO
+       ============================================================ */
+
+    .result-card {{
+        background: linear-gradient(
+            145deg,
+            var(--surface-2),
+            var(--surface)
+        );
+
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        padding: 1.25rem;
+        margin: .9rem 0;
+    }}
+
+    .result-label {{
+        color: var(--text-muted);
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 800;
+    }}
+
+    .result-value {{
+        color: var(--text);
+        font-size: 2rem;
+        font-weight: 900;
+        margin-top: .15rem;
+    }}
+
+    .orange {{
+        color: var(--orange);
+    }}
+
+
+    /* ============================================================
+       ALERTA / GARGALO
+       ============================================================ */
+
+    .danger-card {{
+        background: var(--danger-bg);
+        border: 1px solid var(--danger-border);
+        border-radius: 20px;
+        padding: 1.15rem;
+        margin: 1rem 0;
+    }}
+
+
+    /* ============================================================
+       DICAS
+       ============================================================ */
+
+    .tip-card {{
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 1rem 1.05rem;
+        margin: .65rem 0;
+    }}
+
+    .tip-title {{
+        color: var(--text);
+        font-weight: 800;
+        margin-bottom: .25rem;
+    }}
+
+    .tip-text {{
+        color: var(--text-secondary);
+        line-height: 1.48;
+        font-size: .92rem;
+    }}
+
+
+    /* ============================================================
+       POTENCIAL
+       ============================================================ */
+
+    .potential {{
+        border: 1px solid rgba(255,102,0,.45);
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,102,0,.13),
+                rgba(255,102,0,.04)
+            );
+
+        border-radius: 22px;
+        padding: 1.25rem;
+        text-align: center;
+        margin: 1rem 0;
+    }}
+
+    .potential-number {{
+        color: var(--orange);
+        font-size: 2.35rem;
+        line-height: 1;
+        font-weight: 950;
+        margin: .35rem 0;
+    }}
+
+
+    /* ============================================================
+       CELEBRAÇÃO
+       ============================================================ */
+
+    .celebration {{
+        border: 1px solid rgba(255,102,0,.55);
+
+        background:
+            radial-gradient(
+                circle at 50% 0%,
+                rgba(255,102,0,.20),
+                transparent 48%
+            ),
+            linear-gradient(
+                145deg,
+                var(--surface-2),
+                var(--surface)
+            );
+
+        border-radius: 26px;
+        padding: 1.7rem 1.25rem;
+        text-align: center;
+        margin: 1rem 0 1.25rem;
+        box-shadow: 0 0 45px rgba(255,102,0,.10);
+    }}
+
+    .celebration-icon {{
+        font-size: 3.3rem;
+        line-height: 1;
+        margin-bottom: .45rem;
+    }}
+
+    .celebration-title {{
+        color: var(--text);
+        font-size: 2rem;
+        font-weight: 950;
+        line-height: 1.05;
+    }}
+
+    .celebration-sub {{
+        color: var(--text-secondary);
+        font-size: .98rem;
+        line-height: 1.5;
+        margin-top: .6rem;
+    }}
+
+
+    /* ============================================================
+       BADGE DE FONTE
+       ============================================================ */
+
+    .source-badge {{
+        display: inline-block;
+        border: 1px solid rgba(255,102,0,.35);
+        background: rgba(255,102,0,.08);
+        color: var(--orange-light);
+        border-radius: 999px;
+        padding: .35rem .7rem;
+        font-size: .78rem;
+        font-weight: 800;
+        margin-top: .45rem;
+    }}
+
+
+    /* ============================================================
+       BOTÕES
+       ============================================================ */
+
+    div.stButton > button {{
+        border-radius: 14px !important;
+        min-height: 48px !important;
+        font-weight: 850 !important;
+
+        border: 1px solid var(--border) !important;
+        background: var(--surface) !important;
+        color: var(--text) !important;
+
+        transition:
+            transform .15s ease,
+            border-color .15s ease,
+            background .15s ease;
+    }}
+
+    div.stButton > button:hover {{
+        border-color: var(--orange) !important;
+        color: var(--text) !important;
+    }}
+
+    div.stButton > button[kind="primary"] {{
+        background: var(--orange) !important;
+        border-color: var(--orange) !important;
+        color: #FFFFFF !important;
+    }}
+
+    div.stButton > button[kind="primary"]:hover {{
+        background: var(--orange) !important;
+        border-color: var(--orange) !important;
+        color: #FFFFFF !important;
+        filter: brightness(1.05);
+    }}
+
+
+    /* ============================================================
+       SEÇÕES
+       ============================================================ */
+
+    .section-title {{
+        font-size: 1.15rem;
+        font-weight: 850;
+        margin: 1.3rem 0 .7rem;
+        color: var(--text);
+    }}
+
+    .privacy {{
+        text-align: center;
+        color: var(--text-faint);
+        font-size: .76rem;
+        margin-top: .7rem;
+    }}
+
+
+    /* ============================================================
+       PERFIL COMERCIAL
+       ============================================================ */
+
+    .profile-card {{
+        background:
+            radial-gradient(
+                circle at 50% 0%,
+                rgba(255,102,0,.16),
+                transparent 54%
+            ),
+            linear-gradient(
+                145deg,
+                var(--surface-2),
+                var(--surface)
+            );
+
+        border: 1px solid rgba(255,102,0,.52);
+        border-radius: 26px;
+        padding: 1.5rem 1.25rem;
+        text-align: center;
+        margin: 0 0 1.2rem;
+        box-shadow: 0 0 42px rgba(255,102,0,.09);
+    }}
+
+    .profile-kicker {{
+        color: var(--orange-light);
+        font-size: .74rem;
+        font-weight: 900;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+    }}
+
+    .profile-name {{
+        color: var(--text);
+        font-size: clamp(1.55rem, 5vw, 2.2rem);
+        line-height: 1.08;
+        font-weight: 900;
+        margin: .35rem 0 .45rem;
+    }}
+
+    .final-banner {{
+        width: 100%;
+        margin: 28px 0 24px 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        line-height: 0;
+    }}
+
+    .final-banner img {{
+        width: 100%;
+        aspect-ratio: 4 / 1;
+        object-fit: cover;
+        display: block;
+    }}
+
+    .profile-desc {{
+        color: var(--text-secondary);
+        font-size: .9rem;
+        line-height: 1.5;
+        max-width: 580px;
+        margin: 0 auto;
+    }}
+
+
+    /* ============================================================
+       BOTÃO ADMINISTRATIVO FLUTUANTE
+       ============================================================ */
+
+    .admin-float {{
+        position: fixed;
+        left: 18px;
+        bottom: 16px;
+        z-index: 9999;
+        width: 34px;
+        height: 34px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 50%;
+
+        box-shadow: 0 5px 20px var(--shadow-strong);
+        backdrop-filter: blur(8px);
+    }}
+
+    .admin-float a {{
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+    }}
+
+    .admin-float a:hover {{
+        color: var(--orange);
+    }}
+
+    .admin-shell {{
+        max-width: 1200px;
+        margin: 0 auto;
+    }}
+
+    /* ============================================================
+       CTA WHATSAPP + GANHO POTENCIAL
+       ============================================================ */
+
+    .cta-team {{
+        display: block;
+        width: 100%;
+        text-align: center;
+        background: var(--orange);
+        color: #FFFFFF !important;
+        font-weight: 900;
+        font-size: 1.05rem;
+        padding: 1rem 1.25rem;
+        border-radius: 14px;
+        text-decoration: none !important;
+        margin: 0.5rem 0 1.5rem;
+        box-shadow: 0 8px 28px rgba(255,102,0,.28);
+        transition: filter .15s ease, transform .15s ease;
+    }}
+
+    .cta-team:hover {{
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+        color: #FFFFFF !important;
+    }}
+
+    .earn-card {{
+        background: linear-gradient(
+            145deg,
+            var(--surface-2),
+            var(--surface)
+        );
+        border: 1px solid rgba(255,102,0,.45);
+        border-radius: 22px;
+        padding: 1.35rem 1.2rem;
+        text-align: center;
+        margin: 0.6rem 0;
+    }}
+
+    .earn-label {{
+        color: var(--text-muted);
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 800;
+    }}
+
+    .earn-value {{
+        color: var(--orange);
+        font-size: clamp(1.8rem, 6vw, 2.5rem);
+        font-weight: 950;
+        line-height: 1.1;
+        margin: .4rem 0 .15rem;
+    }}
+
+    .earn-sub {{
+        color: var(--text-secondary);
+        font-size: .88rem;
+        line-height: 1.4;
+    }}
+
+
+    /* ============================================================
+       AJUSTES ESPECÍFICOS DO TEMA CLARO
+       ============================================================ */
+
+    @media (prefers-color-scheme: light) {{
 
         .stApp {{
             background: var(--bg) !important;
-            color: var(--text) !important;
         }}
 
-        .block-container {{
-            max-width: 760px;
-            padding-top: 1.2rem;
-            padding-bottom: 4rem;
+        /* Evita texto branco herdado do tema escuro */
+        .stMarkdown,
+        .stCaption,
+        .stText {{
+            color: var(--text);
         }}
 
-        html,
-        body,
-        [class*="st-"],
-        .stApp {{
-            font-family: "Montserrat", Arial, sans-serif !important;
-        }}
-
-
-        /* ============================================================
-           LABELS DOS INPUTS
-           ============================================================ */
-
-        div[data-testid="stNumberInput"] label,
-        div[data-testid="stTextInput"] label,
-        div[data-testid="stSelectbox"] label {{
-            color: var(--text-secondary) !important;
-            font-weight: 650 !important;
-        }}
-
-
-        /* ============================================================
-           INPUTS / SELECTS
-           ============================================================ */
-
-        input,
-        textarea,
-        select,
-        button,
-        [data-testid="stNumberInput"] input {{
-            font-family: "Montserrat", Arial, sans-serif !important;
-            font-weight: 600 !important;
-        }}
-
-        div[data-baseweb="input"],
-        div[data-baseweb="select"],
-        div[data-baseweb="textarea"] {{
-            background: var(--surface) !important;
-            border-color: var(--border) !important;
-        }}
-
-        div[data-baseweb="input"] input,
-        div[data-baseweb="select"] input,
-        div[data-baseweb="textarea"] textarea {{
-            color: var(--text) !important;
-            background: var(--surface) !important;
-            caret-color: var(--orange) !important;
-        }}
-
-        div[data-baseweb="input"] input::placeholder,
-        div[data-baseweb="textarea"] textarea::placeholder {{
+        /* Texto auxiliar do Streamlit */
+        [data-testid="stCaptionContainer"] {{
             color: var(--text-muted) !important;
-            opacity: 1 !important;
         }}
 
-        div[data-baseweb="select"] > div {{
-            background: var(--surface) !important;
+        /* Divisores */
+        hr {{
             border-color: var(--border) !important;
         }}
 
-        div[data-baseweb="select"] span {{
+        /* Métricas */
+        [data-testid="stMetric"] {{
             color: var(--text) !important;
-        }}
-
-        /* Dropdown aberto */
-        [data-baseweb="popover"] {{
-            background: var(--surface) !important;
-            border: 1px solid var(--border) !important;
-        }}
-
-        [role="option"] {{
-            background: var(--surface) !important;
-            color: var(--text) !important;
-        }}
-
-        [role="option"]:hover {{
-            background: var(--surface-3) !important;
         }}
 
         [data-testid="stMetricValue"] {{
-            font-family: "Montserrat", Arial, sans-serif !important;
-            font-weight: 700 !important;
             color: var(--text) !important;
         }}
 
@@ -205,526 +742,49 @@ st.markdown(
             color: var(--text-muted) !important;
         }}
 
-
-        /* ============================================================
-           MARCA / HERO
-           ============================================================ */
-
-        .brand {{
-            text-align: center;
-            margin-bottom: 1.35rem;
+        /* Inputs */
+        input,
+        textarea {{
+            color: var(--text) !important;
+            -webkit-text-fill-color: var(--text) !important;
         }}
 
-        .brand img {{
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            filter: drop-shadow(0 0 24px rgba(255,102,0,.20));
+        /* Selectbox */
+        [data-baseweb="select"] {{
+            color: var(--text) !important;
         }}
 
-        .eyebrow {{
-            color: var(--orange);
-            font-size: .76rem;
-            font-weight: 850;
-            letter-spacing: .16em;
-            text-transform: uppercase;
-            margin-top: .55rem;
-        }}
-
-        .hero-title {{
-            font-size: clamp(2rem, 7vw, 3.15rem);
-            line-height: 1.03;
-            font-weight: 900;
-            margin: .35rem 0 .6rem;
-            color: var(--text);
-        }}
-
-        .hero-sub {{
-            color: var(--text-secondary);
-            font-size: 1.03rem;
-            line-height: 1.55;
-            max-width: 620px;
-            margin: 0 auto;
-        }}
-
-
-        /* ============================================================
-           CARD DE PERGUNTA
-           ============================================================ */
-
-        .question-card {{
-            background: linear-gradient(
-                145deg,
-                var(--surface-2),
-                var(--surface)
-            );
-
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 1.35rem 1.25rem;
-            margin-top: 1.15rem;
-            box-shadow: 0 15px 45px var(--shadow);
-        }}
-
-        .step {{
-            color: var(--orange);
-            font-size: .77rem;
-            font-weight: 850;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-        }}
-
-        .question {{
-            font-size: 1.5rem;
-            line-height: 1.2;
-            font-weight: 850;
-            color: var(--text);
-            margin: .35rem 0 .4rem;
-        }}
-
-        .helper {{
-            color: var(--text-muted);
-            font-size: .92rem;
-            line-height: 1.45;
-            margin-bottom: .8rem;
-        }}
-
-        .progress-wrap {{
-            background: var(--progress-bg);
-            height: 6px;
-            border-radius: 99px;
-            overflow: hidden;
-            margin: .8rem 0 1.1rem;
-        }}
-
-        .progress-bar {{
-            height: 100%;
-            background: var(--orange);
-            border-radius: 99px;
-        }}
-
-        .mini-note {{
-            color: var(--text-faint);
-            font-size: .82rem;
-            text-align: center;
-            margin-top: .55rem;
-        }}
-
-
-        /* ============================================================
-           CARDS DE RESULTADO
-           ============================================================ */
-
-        .result-card {{
-            background: linear-gradient(
-                145deg,
-                var(--surface-2),
-                var(--surface)
-            );
-
-            border: 1px solid var(--border);
-            border-radius: 22px;
-            padding: 1.25rem;
-            margin: .9rem 0;
-        }}
-
-        .result-label {{
-            color: var(--text-muted);
-            font-size: .78rem;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            font-weight: 800;
-        }}
-
-        .result-value {{
-            color: var(--text);
-            font-size: 2rem;
-            font-weight: 900;
-            margin-top: .15rem;
-        }}
-
-        .orange {{
-            color: var(--orange);
-        }}
-
-
-        /* ============================================================
-           ALERTA / GARGALO
-           ============================================================ */
-
-        .danger-card {{
-            background: var(--danger-bg);
-            border: 1px solid var(--danger-border);
-            border-radius: 20px;
-            padding: 1.15rem;
-            margin: 1rem 0;
-        }}
-
-
-        /* ============================================================
-           DICAS
-           ============================================================ */
-
-        .tip-card {{
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 1rem 1.05rem;
-            margin: .65rem 0;
-        }}
-
-        .tip-title {{
-            color: var(--text);
-            font-weight: 800;
-            margin-bottom: .25rem;
-        }}
-
-        .tip-text {{
-            color: var(--text-secondary);
-            line-height: 1.48;
-            font-size: .92rem;
-        }}
-
-
-        /* ============================================================
-           POTENCIAL
-           ============================================================ */
-
-        .potential {{
-            border: 1px solid rgba(255,102,0,.45);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,102,0,.13),
-                    rgba(255,102,0,.04)
-                );
-
-            border-radius: 22px;
-            padding: 1.25rem;
-            text-align: center;
-            margin: 1rem 0;
-        }}
-
-        .potential-number {{
-            color: var(--orange);
-            font-size: 2.35rem;
-            line-height: 1;
-            font-weight: 950;
-            margin: .35rem 0;
-        }}
-
-
-        /* ============================================================
-           CELEBRAÇÃO
-           ============================================================ */
-
-        .celebration {{
-            border: 1px solid rgba(255,102,0,.55);
-
-            background:
-                radial-gradient(
-                    circle at 50% 0%,
-                    rgba(255,102,0,.20),
-                    transparent 48%
-                ),
-                linear-gradient(
-                    145deg,
-                    var(--surface-2),
-                    var(--surface)
-                );
-
-            border-radius: 26px;
-            padding: 1.7rem 1.25rem;
-            text-align: center;
-            margin: 1rem 0 1.25rem;
-            box-shadow: 0 0 45px rgba(255,102,0,.10);
-        }}
-
-        .celebration-icon {{
-            font-size: 3.3rem;
-            line-height: 1;
-            margin-bottom: .45rem;
-        }}
-
-        .celebration-title {{
-            color: var(--text);
-            font-size: 2rem;
-            font-weight: 950;
-            line-height: 1.05;
-        }}
-
-        .celebration-sub {{
-            color: var(--text-secondary);
-            font-size: .98rem;
-            line-height: 1.5;
-            margin-top: .6rem;
-        }}
-
-
-        /* ============================================================
-           BADGE DE FONTE
-           ============================================================ */
-
-        .source-badge {{
-            display: inline-block;
-            border: 1px solid rgba(255,102,0,.35);
-            background: rgba(255,102,0,.08);
-            color: var(--orange-light);
-            border-radius: 999px;
-            padding: .35rem .7rem;
-            font-size: .78rem;
-            font-weight: 800;
-            margin-top: .45rem;
-        }}
-
-
-        /* ============================================================
-           BOTÕES
-           ============================================================ */
-
-        div.stButton > button {{
-            border-radius: 14px !important;
-            min-height: 48px !important;
-            font-weight: 850 !important;
-
-            border: 1px solid var(--border) !important;
+        /* Popovers e menus */
+        [data-baseweb="popover"] {{
             background: var(--surface) !important;
-            color: var(--text) !important;
-
-            transition:
-                transform .15s ease,
-                border-color .15s ease,
-                background .15s ease;
         }}
 
-        div.stButton > button:hover {{
-            border-color: var(--orange) !important;
-            color: var(--text) !important;
-        }}
-
-        div.stButton > button[kind="primary"] {{
-            background: var(--orange) !important;
-            border-color: var(--orange) !important;
-            color: #FFFFFF !important;
-        }}
-
-        div.stButton > button[kind="primary"]:hover {{
-            background: var(--orange) !important;
-            border-color: var(--orange) !important;
-            color: #FFFFFF !important;
-            filter: brightness(1.05);
-        }}
-
-
-        /* ============================================================
-           SEÇÕES
-           ============================================================ */
-
-        .section-title {{
-            font-size: 1.15rem;
-            font-weight: 850;
-            margin: 1.3rem 0 .7rem;
-            color: var(--text);
-        }}
-
-        .privacy {{
-            text-align: center;
-            color: var(--text-faint);
-            font-size: .76rem;
-            margin-top: .7rem;
-        }}
-
-
-        /* ============================================================
-           PERFIL COMERCIAL
-           ============================================================ */
-
-        .profile-card {{
-            background:
-                radial-gradient(
-                    circle at 50% 0%,
-                    rgba(255,102,0,.16),
-                    transparent 54%
-                ),
-                linear-gradient(
-                    145deg,
-                    var(--surface-2),
-                    var(--surface)
-                );
-
-            border: 1px solid rgba(255,102,0,.52);
-            border-radius: 26px;
-            padding: 1.5rem 1.25rem;
-            text-align: center;
-            margin: 0 0 1.2rem;
-            box-shadow: 0 0 42px rgba(255,102,0,.09);
-        }}
-
-        .profile-kicker {{
-            color: var(--orange-light);
-            font-size: .74rem;
-            font-weight: 900;
-            letter-spacing: .16em;
-            text-transform: uppercase;
-        }}
-
-        .profile-name {{
-            color: var(--text);
-            font-size: clamp(1.55rem, 5vw, 2.2rem);
-            line-height: 1.08;
-            font-weight: 900;
-            margin: .35rem 0 .45rem;
-        }}
-
-        .final-banner {{
-            width: 100%;
-            margin: 28px 0 24px 0;
+        /* Tabela administrativa */
+        [data-testid="stDataFrame"] {{
+            border: 1px solid var(--border);
+            border-radius: 12px;
             overflow: hidden;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            line-height: 0;
         }}
-
-        .final-banner img {{
-            width: 100%;
-            aspect-ratio: 4 / 1;
-            object-fit: cover;
-            display: block;
-        }}
-
-        .profile-desc {{
-            color: var(--text-secondary);
-            font-size: .9rem;
-            line-height: 1.5;
-            max-width: 580px;
-            margin: 0 auto;
-        }}
+    }}
 
 
-        /* ============================================================
-           BOTÃO ADMINISTRATIVO FLUTUANTE
-           ============================================================ */
+    /* ============================================================
+       FONTE
+       ============================================================ */
 
-        .admin-float {{
-            position: fixed;
-            left: 18px;
-            bottom: 16px;
-            z-index: 9999;
-            width: 34px;
-            height: 34px;
+    @import url(
+        "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap"
+    );
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: 50%;
-
-            box-shadow: 0 5px 20px var(--shadow-strong);
-            backdrop-filter: blur(8px);
-        }}
-
-        .admin-float a {{
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 13px;
-        }}
-
-        .admin-float a:hover {{
-            color: var(--orange);
-        }}
-
-        .admin-shell {{
-            max-width: 1200px;
-            margin: 0 auto;
-        }}
-
-
-        /* ============================================================
-           AJUSTES ESPECÍFICOS DO TEMA CLARO
-           ============================================================ */
-
-        @media (prefers-color-scheme: light) {{
-
-            .stApp {{
-                background: var(--bg) !important;
-            }}
-
-            /* Evita texto branco herdado do tema escuro */
-            .stMarkdown,
-            .stCaption,
-            .stText {{
-                color: var(--text);
-            }}
-
-            /* Texto auxiliar do Streamlit */
-            [data-testid="stCaptionContainer"] {{
-                color: var(--text-muted) !important;
-            }}
-
-            /* Divisores */
-            hr {{
-                border-color: var(--border) !important;
-            }}
-
-            /* Métricas */
-            [data-testid="stMetric"] {{
-                color: var(--text) !important;
-            }}
-
-            [data-testid="stMetricValue"] {{
-                color: var(--text) !important;
-            }}
-
-            [data-testid="stMetricLabel"] {{
-                color: var(--text-muted) !important;
-            }}
-
-            /* Inputs */
-            input,
-            textarea {{
-                color: var(--text) !important;
-                -webkit-text-fill-color: var(--text) !important;
-            }}
-
-            /* Selectbox */
-            [data-baseweb="select"] {{
-                color: var(--text) !important;
-            }}
-
-            /* Popovers e menus */
-            [data-baseweb="popover"] {{
-                background: var(--surface) !important;
-            }}
-
-            /* Tabela administrativa */
-            [data-testid="stDataFrame"] {{
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                overflow: hidden;
-            }}
-        }}
-
-
-        /* ============================================================
-           FONTE
-           ============================================================ */
-
-        @import url(
-            "https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap"
-        );
-
-    </style>
+</style>
     """,
     unsafe_allow_html=True,
 )
 
-
 # ============================================================
 # HELPERS
 # ============================================================
+
 def brl(v):
     return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -801,6 +861,7 @@ def send_admin_otp(email, code):
 
     # Gmail aceita SSL na 465 e STARTTLS na 587. Tentar os dois evita que uma
     # restrição de rede do host de deploy impeça o envio mesmo com o Secret correto.
+
     attempts = []
     ports = [smtp["port"]]
     if smtp["port"] == 465:
@@ -850,6 +911,7 @@ def request_admin_otp(email):
 
     # Guarda o desafio antes do envio. Assim, mesmo que o primeiro envio falhe,
     # a tela já muda para o campo de código e permite um novo envio.
+
     st.session_state.admin_otp_hash = digest
     st.session_state.admin_otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
     st.session_state.admin_otp_email = email
@@ -1070,6 +1132,55 @@ def discount_insights(discount):
     return None
 
 
+def volume_bonus(sales):
+    """Bônus mensal por volume de vendas."""
+    if sales >= 20:
+        return 1200.0
+    if sales >= 15:
+        return 900.0
+    if sales >= 10:
+        return 600.0
+    return 0.0
+
+
+def simulate_team_earnings(monthly_sales, months=12):
+    """
+    Simula ganhos na operação do time:
+    - Comissão por venda: R$ 450
+    - R$ 50/mês por cliente ativo (desde o 1º mês)
+    - + R$ 10/mês por cliente quando a carteira atinge 100 clientes
+    - Bônus de volume mensal: 10→600, 15→900, 20→1200
+    Carteira cresce somando as vendas de cada mês.
+    """
+    commission_per_sale = 450.0
+    residual_per_client = 50.0
+    portfolio_bonus_per_client = 10.0  # a partir de 100 clientes
+    portfolio_threshold = 100
+
+    sales = max(0, int(monthly_sales))
+    monthly_incomes = []
+    clients = 0
+
+    for m in range(1, months + 1):
+        clients += sales
+        commission = sales * commission_per_sale
+        residual = clients * residual_per_client
+        portfolio_extra = clients * portfolio_bonus_per_client if clients >= portfolio_threshold else 0.0
+        bonus = volume_bonus(sales)
+        total = commission + residual + portfolio_extra + bonus
+        monthly_incomes.append(total)
+
+    avg_3 = sum(monthly_incomes[:3]) / 3 if months >= 3 else (sum(monthly_incomes) / len(monthly_incomes) if monthly_incomes else 0)
+    month_12 = monthly_incomes[11] if len(monthly_incomes) >= 12 else (monthly_incomes[-1] if monthly_incomes else 0)
+
+    return {
+        "monthly": monthly_incomes,
+        "avg_3_months": avg_3,
+        "month_12": month_12,
+        "clients_at_12": clients,
+    }
+
+
 def calculate(data):
     contacts = data["contacts"]
     conversations = data["conversations"]
@@ -1103,6 +1214,7 @@ def calculate(data):
     # Se o volume estiver baixo, o diagnóstico passa a tratar volume
     # como o problema principal. A origem escolhida altera a simulação
     # da conversão cotação → venda conforme os fatores definidos pelo produto.
+
     factor = source_factor(source) if source else 1.0
     source_quote_sale_rate = min(1.0, r3 * factor)
 
@@ -1150,6 +1262,7 @@ def calculate(data):
         achievable = needed_rate <= 1
 
     # Simulação de volume quando o funil tem pouca entrada.
+
     if low_volume and contacts > 0 and r1 > 0 and r2 > 0:
         required_quotes = target / source_quote_sale_rate if source_quote_sale_rate > 0 else None
         required_contacts = (
@@ -1277,6 +1390,7 @@ if is_admin_route():
 # ============================================================
 # STATE
 # ============================================================
+
 for key, default in [
     ("step", 0),
     ("answers", {}),
@@ -1295,6 +1409,7 @@ render_logo()
 # ============================================================
 # DYNAMIC QUESTIONS
 # ============================================================
+
 def build_questions():
     questions = [
         ("contacts", "Quantos novos contatos você recebe por mês?", "Pense em WhatsApp, Instagram, indicação, anúncio e prospecção.", 0, 10, 1, "number"),
@@ -1817,12 +1932,6 @@ else:
             unsafe_allow_html=True,
         )
 
-        # Banner final
-        if os.path.exists("banner.png"):
-            st.markdown('<div class="final-banner">', unsafe_allow_html=True)
-            st.image("banner.png", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
         st.markdown("### 💡 3 ações para testar")
         for title, text in info["actions"]:
             st.markdown(
@@ -1833,6 +1942,104 @@ else:
                 </div>
                 """,
                 unsafe_allow_html=True,
+            )
+
+        # Banner DEPOIS das 3 ações
+        if os.path.exists("banner.png"):
+            st.markdown('<div class="final-banner">', unsafe_allow_html=True)
+            st.image("banner.png", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # Botão WhatsApp
+        wa_url = (
+            "https://wa.me/5519989745446?text="
+            "Ol%C3%A1%2C%20sou%20consultor(a)%20de%20prote%C3%A7%C3%A3o%20veicular%2C%20"
+            "e%20realizei%20o%20diagn%C3%B3stico%20da%20minha%20opera%C3%A7%C3%A3o%20na%20"
+            "ferramenta%20de%20Raio-X%20Comercial.%20Gostaria%20de%20saber%20como%20aumentar%20"
+            "meus%20ganhos%20trabalhando%20com%20voc%C3%AAs!"
+        )
+        st.markdown(
+            f'<a class="cta-team" href="{wa_url}" target="_blank" rel="noopener">Faça parte do meu time!</a>',
+            unsafe_allow_html=True,
+        )
+
+        # ========================================================
+        # GANHO POTENCIAL NO TIME
+        # ========================================================
+        sim = simulate_team_earnings(data["sales"], months=12)
+
+        st.markdown('<div class="section-title">📈 Seu potencial de ganho no time</div>', unsafe_allow_html=True)
+
+        e1, e2 = st.columns(2)
+        with e1:
+            st.markdown(
+                f"""
+                <div class="earn-card">
+                    <div class="earn-label">Ganho médio mensal<br>nos primeiros 3 meses</div>
+                    <div class="earn-value">{brl(sim["avg_3_months"])}</div>
+                    <div class="earn-sub">média mensal com {data["sales"]} vendas/mês</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with e2:
+            st.markdown(
+                f"""
+                <div class="earn-card">
+                    <div class="earn-label">Ganho no 12º mês<br>após 1 ano de operação</div>
+                    <div class="earn-value">{brl(sim["month_12"])}</div>
+                    <div class="earn-sub">com carteira de {sim["clients_at_12"]} clientes</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        try:
+            import pandas as pd
+            import altair as alt
+
+            chart_df = pd.DataFrame({
+                "Mês": list(range(1, 13)),
+                "Ganho (R$)": sim["monthly"],
+            })
+
+            chart = (
+                alt.Chart(chart_df)
+                .mark_area(
+                    line={"color": "#FF6600", "strokeWidth": 3},
+                    color=alt.Gradient(
+                        gradient="linear",
+                        stops=[
+                            alt.GradientStop(color="rgba(255,102,0,0.45)", offset=0),
+                            alt.GradientStop(color="rgba(255,102,0,0.02)", offset=1),
+                        ],
+                        x1=1, x2=1, y1=1, y2=0,
+                    ),
+                    interpolate="monotone",
+                )
+                .encode(
+                    x=alt.X("Mês:O", title="Mês", axis=alt.Axis(labelAngle=0)),
+                    y=alt.Y("Ganho (R$):Q", title=None, axis=alt.Axis(format=",.0f")),
+                    tooltip=[
+                        alt.Tooltip("Mês:O", title="Mês"),
+                        alt.Tooltip("Ganho (R$):Q", title="Ganho", format=",.2f"),
+                    ],
+                )
+                .properties(height=280)
+                .configure_view(stroke=None)
+                .configure_axis(
+                    labelColor="#BDBDBD",
+                    titleColor="#969696",
+                    gridColor="#292929",
+                    domainColor="#292929",
+                )
+            )
+            st.altair_chart(chart, use_container_width=True)
+        except Exception:
+            # Fallback simples se altair não estiver disponível
+            st.line_chart(
+                {f"Mês {i+1}": v for i, v in enumerate(sim["monthly"])},
+                use_container_width=True,
             )
 
         st.markdown(
